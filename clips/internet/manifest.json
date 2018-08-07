@@ -1,0 +1,27 @@
+{
+    "name"          : "Stuff from the Internet",
+    "key"           : "internet",
+    "description"   : "All the garbage you know and love.",
+    "clips": [
+        {
+            "name": "consequences",
+            "help": "When will you learn‽",
+            "path": "consequences.mp3"
+        },
+        {
+            "name": "anime",
+            "help": "Righteous fury!",
+            "path": "anime.mp3"
+        },
+        {
+            "name": "curb",
+            "help": "Oh geez there Larry.",
+            "path": "curbyourenthusiasm.mp3"
+        },
+        {
+            "name": "kermit",
+            "help": "RIP little green friend.",
+            "path": "kermitsuicide.mp3"
+        }
+    ]
+}

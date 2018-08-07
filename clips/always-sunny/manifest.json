@@ -1,0 +1,72 @@
+{
+    "name": "Always Sunny",
+    "key": "always-sunny",
+    "description": "The gang's best lines",
+    "clips": [
+        {
+            "name": "addicted",
+            "help": "Aww, did someone get addicted to crack?",
+            "path": "addicted.mp3"
+        },
+        {
+            "name": "crack",
+            "help": "He just wants to help.",
+            "path": "crack.mp3"
+        },
+        {
+            "name": "babies",
+            "help": "She'll eat them.",
+            "path": "eatyourbabies.mp3"
+        },
+        {
+            "name": "government",
+            "help": "Modern politics.",
+            "path": "government.mp3"
+        },
+        {
+            "name": "job",
+            "help": "Oh, it's that simple!",
+            "path": "job.mp3"
+        },
+        {
+            "name": "jot",
+            "help": "All things are possible.",
+            "path": "jotthatdown.mp3"
+        },
+        {
+            "name": "pure",
+            "help": "He just wants to be pure.",
+            "path": "pure.mp3"
+        },
+        {
+            "name": "rockflageagle",
+            "help": "A real American hero.",
+            "path": "rockflageagle.mp3"
+        },
+        {
+            "name": "smell",
+            "help": "She didn't think of it.",
+            "path": "smell.mp3"
+        },
+        {
+            "name": "suicide",
+            "help": "A loving friendship.",
+            "path": "suicide.mp3"
+        },
+        {
+            "name": "tools",
+            "help": "A specific need.",
+            "path": "tools.mp3"
+        },
+        {
+            "name": "vote",
+            "help": "The importance of local government.",
+            "path": "vote.mp3"
+        },
+        {
+            "name": "wildcard",
+            "help": "I CUT THE BRAKES!",
+            "path": "wildcard.mp3"
+        }
+    ]
+}

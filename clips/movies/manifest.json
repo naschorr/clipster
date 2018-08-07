@@ -1,0 +1,27 @@
+{
+    "name"          : "Movies",
+    "key"           : "movies",
+    "description"   : "Cinematic classics",
+    "clips": [
+        {
+            "name": "getsome",
+            "help": "Just don't lead them as much.",
+            "path": "getsome.mp3"
+        },
+        {
+            "name": "notlikethis",
+            "help": "Too late.",
+            "path": "notlikethis.mp3"
+        },
+        {
+            "name": "dumber",
+            "help": "Everyone is now dumber.",
+            "path": "everyoneisnowdumber.mp3"
+        },
+        {
+            "name": "illbeback",
+            "help": "He'll be back",
+            "path": "illbeback.mp3"
+        }
+    ]
+}

@@ -1,0 +1,17 @@
+{
+    "name"          : "Arrested Development",
+    "key"           : "arrested",
+    "description"   : "Ron Howard's best lines",
+    "clips": [
+        {
+            "name": "soldier",
+            "help": "A better soldier.",
+            "path": "soldier.mp3"
+        },
+        {
+            "name": "isnt",
+            "help": "It definitely isn't.",
+            "path": "itisnt.mp3"
+        }
+    ]
+}

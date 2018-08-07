@@ -1,0 +1,12 @@
+[Unit]
+Description=Clipster Service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/clipster/bin/python /usr/local/bin/clipster/code/clipster.py
+WorkingDirectory=/usr/local/bin/clipster/code
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=sysinit.target

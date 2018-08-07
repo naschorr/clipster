@@ -1,0 +1,22 @@
+{
+    "version"                       : "0.0.1",
+    "admins"                        : ["Username#1234"],
+    "activation_string"             : "=",
+    "description"                   : "This is a description, I should really think of something good to put here.",
+    "channel_timeout"               : 900,
+    "channel_timeout_clip_paths"    : ["clips/movies/illbeback.mp3"],
+    "skip_votes"                    : 3,
+    "skip_percentage"               : 33,
+
+    "debug_level"                   : 4,
+    "token_file_path"               : "token.json",
+    "clips_folder_path"             : "clips",
+    "ffmpeg_parameters"             : "-ac 2",
+    "ffmpeg_post_parameters"        : "-loglevel 16",
+
+    "boto_enable"                   : false,
+    "boto_resource"                 : "dynamodb",
+    "boto_region_name"              : "us-east-2",
+    "boto_table_name"               : "Clipster",
+    "boto_primary_key"              : "QueryId"
+}

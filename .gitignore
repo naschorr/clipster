@@ -1,0 +1,42 @@
+# Don't share and old versions of files
+*old.*
+
+# Ignore these directories
+bin/
+include/
+lib/
+local/
+tmp/
+temp/
+
+Include/
+Lib/
+Scripts/
+tcl/
+etc/
+share/
+
+# Ignore dev environment project files
+*.vscode
+*.sublime-project
+*.sublime-workspace
+
+# Ignore gitattributes
+.gitattributes
+
+# Ignore the pip-selfcheck
+pip-selfcheck.json
+
+# Ignore .pyc files
+*.pyc
+
+# Ignore venv files
+pyvenv.cfg
+
+# # Ignore the token
+# token.json
+
+# Ignore supplemental clips, but keep some sensible defaults
+# clips/*
+# !clips/movies/*
+# !clips/internet/*
