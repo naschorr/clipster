@@ -6,27 +6,57 @@
         {
             "name": "getsome",
             "help": "Just don't lead them as much.",
-            "path": "getsome.mp3"
+            "path": "get-some.mp3"
         },
         {
             "name": "notlikethis",
             "help": "Too late.",
-            "path": "notlikethis.mp3"
+            "path": "not-like-this.mp3"
         },
         {
             "name": "dumber",
             "help": "Everyone is now dumber.",
-            "path": "everyoneisnowdumber.mp3"
+            "path": "everyone-is-now-dumber.mp3"
         },
         {
             "name": "illbeback",
             "help": "He'll be back",
-            "path": "illbeback.mp3"
+            "path": "ill-be-back.mp3"
         },
         {
             "name": "witness",
             "help": "WITNESS ME",
-            "path": "witnessme.mp3"
+            "path": "witness-me.mp3"
+        },
+        {
+            "name": "secrets",
+            "help": "Top secret.",
+            "path": "secrets.mp3"
+        },
+        {
+            "name": "whatisthat",
+            "help": "What are they?",
+            "path": "what-is-that.mp3"
+        },
+        {
+            "name": "eerie",
+            "help": "Spooky scary.",
+            "path": "eerie.mp3"
+        },
+        {
+            "name": "america",
+            "help": "*freedom intensifies*",
+            "path": "america.mp3"
+        },
+        {
+            "name": "bingo",
+            "help": "You just say bingo.",
+            "path": "bingo.mp3"
+        },
+        {
+            "name": "yougetnothing",
+            "help": "It's as clear as crystal!",
+            "path": "you-get-nothing.mp3"
         }
     ]
 }

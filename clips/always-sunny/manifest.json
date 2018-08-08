@@ -16,7 +16,7 @@
         {
             "name": "babies",
             "help": "She'll eat them.",
-            "path": "eatyourbabies.mp3"
+            "path": "eat-your-babies.mp3"
         },
         {
             "name": "government",
@@ -31,7 +31,7 @@
         {
             "name": "jot",
             "help": "All things are possible.",
-            "path": "jotthatdown.mp3"
+            "path": "jot-that-down.mp3"
         },
         {
             "name": "pure",
@@ -41,7 +41,7 @@
         {
             "name": "rockflageagle",
             "help": "A real American hero.",
-            "path": "rockflageagle.mp3"
+            "path": "rock-flag-eagle.mp3"
         },
         {
             "name": "smell",
@@ -66,7 +66,12 @@
         {
             "name": "wildcard",
             "help": "I CUT THE BRAKES!",
-            "path": "wildcard.mp3"
+            "path": "wild-card.mp3"
+        },
+        {
+            "name": "untethered",
+            "help": "MY RAGE KNOWS NO BOUNDS!",
+            "path": "untethered.mp3"
         }
     ]
 }

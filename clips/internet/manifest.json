@@ -16,12 +16,12 @@
         {
             "name": "curb",
             "help": "Oh geez there Larry.",
-            "path": "curbyourenthusiasm.mp3"
+            "path": "curb-your-enthusiasm.mp3"
         },
         {
             "name": "kermit",
             "help": "RIP little green friend.",
-            "path": "kermitsuicide.mp3"
+            "path": "kermit-suicide.mp3"
         }
     ]
 }
