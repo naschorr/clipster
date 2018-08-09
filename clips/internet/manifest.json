@@ -22,6 +22,11 @@
             "name": "kermit",
             "help": "RIP little green friend.",
             "path": "kermit-suicide.mp3"
+        },
+        {
+            "name": "dejavu",
+            "help": "Running in the 90s.",
+            "path": "deja-vu.mp3"
         }
     ]
 }
