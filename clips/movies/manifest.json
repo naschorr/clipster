@@ -57,6 +57,21 @@
             "name": "yougetnothing",
             "help": "It's as clear as crystal!",
             "path": "you-get-nothing.mp3"
+        },
+        {
+            "name": "bowling",
+            "help": "There are rules.",
+            "path": "bowling.mp3"
+        },
+        {
+            "name": "aggression",
+            "help": "It won't stand, man.",
+            "path": "aggression.mp3"
+        },
+        {
+            "name": "opinion",
+            "help": "That's what it is.",
+            "path": "opinion.mp3"
         }
     ]
 }

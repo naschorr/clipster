@@ -27,6 +27,11 @@
             "name": "dejavu",
             "help": "Running in the 90s.",
             "path": "deja-vu.mp3"
+        },
+        {
+            "name": "no",
+            "help": "DO NOT WAAAANT!",
+            "path": "nooo.mp3"
         }
     ]
 }
