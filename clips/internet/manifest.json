@@ -32,6 +32,27 @@
             "name": "no",
             "help": "DO NOT WAAAANT!",
             "path": "nooo.mp3"
+        },
+        {
+            "name": "didimissit",
+            "help": "It's all over now.",
+            "path": "did-i-miss-it.mp3"
+        },
+        {
+            "name": "favre",
+            "help": "They're gonna kick some alien butt!",
+            "path": "help-brett-favre.mp3"
+        }
+        ,
+        {
+            "name": "favre",
+            "help": "They're gonna kick some alien butt!",
+            "path": "help-brett-favre.mp3"
+        },
+        {
+            "name": "chillfully",
+            "help": "It's going well.",
+            "path": "its-going-chillfully.mp3"
         }
     ]
 }

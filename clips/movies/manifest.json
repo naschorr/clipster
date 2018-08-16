@@ -72,6 +72,11 @@
             "name": "opinion",
             "help": "That's what it is.",
             "path": "opinion.mp3"
+        },
+        {
+            "name": "stfu",
+            "help": "Those are some good burgers!",
+            "path": "stfu.mp3"
         }
     ]
 }

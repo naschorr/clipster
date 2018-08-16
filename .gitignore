@@ -33,10 +33,10 @@ pip-selfcheck.json
 # Ignore venv files
 pyvenv.cfg
 
-# # Ignore the token
-# token.json
+# Ignore the token
+token.json
 
 # Ignore supplemental clips, but keep some sensible defaults
-# clips/*
-# !clips/movies/*
-# !clips/internet/*
+clips/*
+!clips/movies/*
+!clips/internet/*
