@@ -213,7 +213,8 @@ class Clipster:
 
             ## Poorly handled (for now, until I can get more concrete examples in my database) error messages for users
             if ("code =" in str(exception)):
-                await self.bot.say("Sorry <@{}>, Discord is having some issues that won't let me speak right now.")
+                await self.bot.say("Sorry <@{}>, Discord is having some issues that won't let me speak right now."
+                    .format(ctx.message.author.id))
                 return
             ## Generic, command couldn't be completed alert for users
             else:
