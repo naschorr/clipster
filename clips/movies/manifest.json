@@ -77,6 +77,31 @@
             "name": "stfu",
             "help": "Those are some good burgers!",
             "path": "stfu.mp3"
+        },
+        {
+            "name": "diehard",
+            "help": "Yippie-ki-yay.",
+            "path": "yippie-ki-yay.mp3"
+        },
+        {
+            "name": "thatsme",
+            "help": "Really shouldn't mess with him.",
+            "path": "shouldnt-fuck-with.mp3"
+        },
+        {
+            "name": "badfeeling",
+            "help": "He's got a bad feeling about this!",
+            "path": "bad-feeling.mp3"
+        },
+        {
+            "name": "cmon",
+            "help": "You wanna live forever?",
+            "path": "cmon-you-apes.mp3"
+        },
+        {
+            "name": "nooo",
+            "help": "DO NOT WAAAANT!",
+            "path": "nooo.mp3"
         }
     ]
 }
