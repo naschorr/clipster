@@ -1,8 +1,8 @@
 {
-    "version"                       : "0.0.2",
+    "version"                       : "0.1.0",
     "admins"                        : ["Username#1234"],
     "activation_string"             : "=",
-    "description"                   : "This is a description, I should really think of something good to put here.",
+    "description"                   : "A soundboard bot for Discord. Contribute or star me at https://github.com/naschorr/clipster",
     "channel_timeout"               : 900,
     "channel_timeout_clip_paths"    : ["clips/movies/ill-be-back.mp3"],
     "skip_votes"                    : 3,
