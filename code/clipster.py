@@ -14,6 +14,7 @@ import speech
 import admin
 import clips
 import dynamo_helper
+import help_formatter
 
 
 if not discord.opus.is_loaded():
@@ -181,6 +182,7 @@ class Clipster:
         ## Init the bot and module manager
         self.bot = commands.Bot(
             command_prefix=commands.when_mentioned_or(self.activation_string),
+            formatter=help_formatter.ClipsterHelpFormatter(),
             description=self.description
         )
         self.module_manager = ModuleManager(self, self.bot)
