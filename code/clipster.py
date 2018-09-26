@@ -15,6 +15,7 @@ import admin
 import clips
 import dynamo_helper
 import help_formatter
+from string_similarity import StringSimilarity
 
 
 if not discord.opus.is_loaded():
@@ -173,6 +174,7 @@ class Clipster:
         self.description = CONFIG_OPTIONS.get(self.DESCRIPTION_KEY, 'No bot description found')
         self.token_file_path = CONFIG_OPTIONS.get(self.TOKEN_FILE_PATH_KEY)
         self.clips_folder_path = CONFIG_OPTIONS.get(self.CLIPS_FOLDER_PATH_KEY)
+        self.invalid_command_minimum_similarity = float(CONFIG_OPTIONS.get("invalid_command_minimum_similarity", 0.25))
         self.dynamo_db = dynamo_helper.DynamoHelper()
 
         ## Make sure we've got the bare minimums to instantiate and run the bot
@@ -218,10 +220,27 @@ class Clipster:
                 await self.bot.say("Sorry <@{}>, Discord is having some issues that won't let me speak right now."
                     .format(ctx.message.author.id))
                 return
-            ## Generic, command couldn't be completed alert for users
+
+            ## Attempt to find a command that's similar to the one they wanted. Otherwise just direct them to the help page
             else:
-                await self.bot.say("Sorry <@{}>, **{}{}** isn't a valid command. Try the **{}help** page."
-                    .format(ctx.message.author.id, ctx.prefix, ctx.invoked_with, self.activation_string))
+                help_text_chunks = [
+                    "Sorry <@{}>, **{}{}** isn't a valid command.".format(ctx.message.author.id, ctx.prefix, ctx.invoked_with)
+                ]
+
+                ## Assuming that the message is properly formatted, and has the activation string before it.
+                message = ctx.message.content[len(self.activation_string):]
+                most_similar_command = (None, 0)
+                for key, value in self.bot.commands.items():
+                    distance = StringSimilarity.similarity(key, message)
+                    if (distance > most_similar_command[1]):
+                        most_similar_command = (key, distance)
+
+                if (most_similar_command[1] > self.invalid_command_minimum_similarity):
+                    help_text_chunks.append("Did you mean **{}{}**?".format(self.activation_string, most_similar_command[0]))
+                else:
+                    help_text_chunks.append("Try the **{}help** page.".format(self.activation_string))
+
+                await self.bot.say(" ".join(help_text_chunks))
                 return
 
     ## Methods
