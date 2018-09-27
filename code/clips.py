@@ -238,10 +238,14 @@ class Clips:
         await command.callback(self, ctx)
 
 
-    def _calcSubstringScore(self, message_split, description_split):
+    def _calcSubstringScore(self, message, description):
+        ## Todo: shrink instances of repeated letters down to a single letter in both message and description
+        ##       (ex. yeeeee => ye or reeeeeboot => rebot)
+
+        message_split = message.split(' ')
         word_frequency = 0
         for word in message_split:
-            if (word in description_split):
+            if (word in description.split(' ')):
                 word_frequency += 1
 
         return word_frequency / len(message_split)
@@ -250,11 +254,9 @@ class Clips:
     ## Attempts to find the command whose description text most closely matches the provided message
     @commands.command(pass_context=True, no_pm=True)
     async def find(self, ctx, *, message):
+        ## Strip all non alphanumeric and non whitespace characters out of the message
         message = ''.join(char for char in message.lower() if (char.isalnum() or char.isspace()))
-        ## Calculate how many times the words in the message show up in a given Clip's description
-        ## Todo: shrink instances of repeated letters down to a single letter in both message and description
-        ##       (ex. yeeeee => ye or reeeeeboot => rebot)
-        message_split = message.split(' ')
+
         most_similar_command = (None, 0)
         for clip_group in self.clip_groups.values():
             for clip in clip_group.clips.values():
@@ -267,9 +269,10 @@ class Clips:
                     continue
 
                 ## Build a weighted distance using a traditional similarity metric and the previously calculated word
-                ## frequency
-                distance =  (self._calcSubstringScore(message_split, description.split(' ')) * 0.67) + \
-                            (StringSimilarity.similarity(description, message) * 0.33)
+                ## frequency as well as the similarity of the actual string that invokes the clip
+                distance =  (self._calcSubstringScore(message, description) * 0.5) + \
+                            (StringSimilarity.similarity(description, message) * 0.3) + \
+                            (StringSimilarity.similarity(message, clip.name) * 0.2)
 
                 if (distance > most_similar_command[1]):
                     most_similar_command = (clip, distance)

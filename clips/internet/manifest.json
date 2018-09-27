@@ -4,139 +4,154 @@
     "description"   : "All the garbage you know and love.",
     "clips": [
         {
-            "name":     "consequences",
-            "help":     "When will you learn‽",
-            "path":     "consequences.mp3"
+            "name":         "consequences",
+            "description":  "when will you learn when will you learn that your actions have consequences",
+            "help":         "When will you learn‽",
+            "path":         "consequences.mp3"
         },
         {
-            "name":     "anime",
-            "help":     "Righteous fury!",
-            "path":     "anime.mp3"
+            "name":         "anime",
+            "description":  "dont fuck with me ive got the power of god and anime on my side ahh",
+            "help":         "Righteous fury!",
+            "path":         "anime.mp3"
         },
         {
-            "name":     "curb",
-            "help":     "Oh geez there Larry.",
-            "path":     "curb-your-enthusiasm.mp3"
+            "name":         "curb",
+            "description":  "curb your enthusiasm theme song larry david",
+            "help":         "Oh geez there Larry.",
+            "path":         "curb-your-enthusiasm.mp3"
         },
         {
-            "name":     "kermit",
-            "help":     "RIP little green friend.",
-            "path":     "kermit-suicide.mp3"
+            "name":         "kermit",
+            "description":  "im going to kermit suicide no",
+            "help":         "RIP little green friend.",
+            "path":         "kermit-suicide.mp3"
         },
         {
-            "name":     "dejavu",
-            "aliases":  ["initiald", "drifting"],
-            "help":     "Running in the 90s.",
-            "path":     "deja-vu.mp3"
+            "name":         "dejavu",
+            "description":  "deja vu ive just been in this place before higher on the street and i know its my time to come home calling you initial d",
+            "help":         "Running in the 90s.",
+            "path":         "deja-vu.mp3"
         },
         {
-            "name":     "didimissit",
-            "help":     "It's all over now.",
-            "path":     "did-i-miss-it.mp3"
+            "name":         "didimissit",
+            "description":  "did i miss it",
+            "help":         "It's all over now.",
+            "path":         "did-i-miss-it.mp3"
         },
         {
-            "name":     "favre",
-            "help":     "They're gonna kick some alien butt!",
-            "path":     "help-brett-favre.mp3"
+            "name":         "favre",
+            "description":  "so dont wait help brett favre and the boys kick some alien butt",
+            "help":         "They're gonna kick some alien butt!",
+            "path":         "help-brett-favre.mp3"
         },
         {
-            "name":     "chillfully",
-            "help":     "It's going well.",
-            "path":     "its-going-chillfully.mp3"
+            "name":         "chillfully",
+            "description":  "well its its going chillfully thus far",
+            "help":         "It's going well.",
+            "path":         "its-going-chillfully.mp3"
         },
         {
-            "name":     "people",
-            "help":     "Can't trust 'em.",
-            "path":     "people.mp3"
+            "name":         "people",
+            "description":  "people like coldplay and voted for the nazis you cant trust people",
+            "help":         "Can't trust 'em.",
+            "path":         "people.mp3"
         },
         {
-            "name":     "no",
-            "help":     "It just doesn't add up.",
-            "path":     "no.mp3"
+            "name":         "no",
+            "description":  "for sam it just doesnt add up no",
+            "help":         "It just doesn't add up.",
+            "path":         "no.mp3"
         },
         {
-            "name":     "eternity",
-            "help":     "One eternity later.",
-            "path":     "one-eternity-later.mp3"
+            "name":         "eternity",
+            "description":  "one eternity later spongebob",
+            "help":         "One eternity later.",
+            "path":         "one-eternity-later.mp3"
         },
         {
-            "name":     "noice",
-            "aliases":  ["nice"],
-            "help":     "Noice.",
-            "path":     "noice.mp3"
+            "name":         "noice",
+            "description":  "noice",
+            "help":         "Noice.",
+            "path":         "noice.mp3"
         },
         {
-            "name":     "ohshit",
-            "aliases":  ["nudetayne"],
-            "help":     "This is not suitable for work.",
-            "path":     "oh-shit-im-okay.mp3"
+            "name":         "ohshit",
+            "description":  "oh shit im okay",
+            "help":         "This is not suitable for work.",
+            "path":         "oh-shit-im-okay.mp3"
         },
         {
-            "name":     "goofin",
-            "aliases":  ["goofing", "newboots", "newbootgoofin"],
-            "help":     "Genuine ostrich. Three payments.",
-            "path":     "new-boot-goofin.mp3"
+            "name":         "goofin",
+            "description":  "im just goofing new boot goofin oh",
+            "help":         "Genuine ostrich. Three payments.",
+            "path":         "new-boot-goofin.mp3"
         },
         {
-            "name":     "thatsmypurse",
-            "aliases":  ["mypurse", "idontknowyou"],
-            "help":     "Don't be afraid to shout it.",
-            "path":     "thats-my-purse.mp3"
+            "name":         "thatsmypurse",
+            "description":  "thats my purse i dont know you",
+            "help":         "Don't be afraid to shout it.",
+            "path":         "thats-my-purse.mp3"
         },
         {
-            "name":     "bustin",
-            "aliases":  ["busting", "ghostbusters"],
-            "help":     "It makes me feel good.",
-            "path":     "bustin.mp3"
+            "name":         "bustin",
+            "description":  "bustin bustin busin makes me feel good",
+            "help":         "It makes me feel good.",
+            "path":         "bustin.mp3"
         },
         {
-            "name":     "ree",
-            "aliases":  ["re", "reee", "reeee", "reeeee"],
-            "help":     "Those gosh dang normies.",
-            "path":     "reee.mp3"
+            "name":         "ree",
+            "description":  "fucking normies ree",
+            "help":         "Those gosh dang normies.",
+            "path":         "reee.mp3"
         },
         {
-            "name":     "themoreyouknow",
-            "aliases":  ["tmyk", "psa"],
-            "help":     "This is a public service announcement.",
-            "path":     "the-more-you-know.mp3"
+            "name":         "themoreyouknow",
+            "description":  "the more you know psa",
+            "help":         "This is a public service announcement.",
+            "path":         "the-more-you-know.mp3"
         },
         {
-            "name":     "thatboyaintright",
-            "aliases":  ["aintright"],
-            "help":     "It's toilet sounds! I got it at the mall.",
-            "path":     "that-boy-aint-right.mp3"
+            "name":         "thatboyaintright",
+            "description":  "that boy aint right",
+            "help":         "It's toilet sounds! I got it at the mall.",
+            "path":         "that-boy-aint-right.mp3"
         },
         {
-            "name":     "memes",
-            "help":     "You will NEVER forget these.",
-            "path":     "memes-you-will-never-forget.mp3"
+            "name":         "memes",
+            "description":  "theres a hierarchy of memes theres some that are memorable for a while and then you forget them and then there are some that are way more memorable then right at the top there are memes that you will never forget",
+            "help":         "You will NEVER forget these.",
+            "path":         "memes-you-will-never-forget.mp3"
         },
         {
-            "name":     "lying",
-            "aliases":  ["lyin", "whyyoualwayslying", "stoplying", "stoplyin"],
-            "help":     "Why you always lying?",
-            "path":     "why-you-always-lying.mp3"
+            "name":         "lying",
+            "description":  "why the fuck you lyin why you always lying hmm oh my god stop fuckin lyin",
+            "help":         "Why you always lying?",
+            "path":         "why-you-always-lying.mp3"
         },
         {
-            "name":     "yeahboy",
-            "help":     "My longest ever!",
-            "path":     "yeah-boy.mp3"
+            "name":         "yeahboy",
+            "description":  "yeah boy",
+            "help":         "My longest ever!",
+            "path":         "yeah-boy.mp3"
         },
         {
-            "name":     "jellybeans",
-            "help":     "To make a long story short...",
-            "path":     "an-entire-bag-of-jelly-beans.mp3"
+            "name":         "jellybeans",
+            "description":  "to make a whole fuckin long story short i put a whole bag of jelly beans up my ass",
+            "help":         "To make a long story short...",
+            "path":         "an-entire-bag-of-jelly-beans.mp3"
         },
         {
-            "name":     "freaky",
-            "help":     "This is four quarters.",
-            "path":     "this-is-four-quarters.mp3"
+            "name":         "freaky",
+            "description":  "this is four quarters of unadulterated freaky shit motha fucker",
+            "help":         "This is four quarters.",
+            "path":         "this-is-four-quarters.mp3"
         },
         {
-            "name":     "stopit",
-            "help":     "A message from Michael Jordan.",
-            "path":     "stop-it-get-some-help.mp3"
+            "name":         "stopit",
+            "description":  "stop it get some help michael jordan",
+            "help":         "A message from Michael Jordan.",
+            "path":         "stop-it-get-some-help.mp3"
         }
     ]
 }
