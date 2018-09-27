@@ -212,6 +212,9 @@ class Clipster:
 
             utilities.debug_print(exception, debug_level=2)
 
+            import traceback
+            traceback.print_tb(exception.__traceback__)
+
             self.dynamo_db.put(dynamo_helper.DynamoItem(
                 ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False, str(exception)))
 
@@ -227,19 +230,26 @@ class Clipster:
                     "Sorry <@{}>, **{}{}** isn't a valid command.".format(ctx.message.author.id, ctx.prefix, ctx.invoked_with)
                 ]
 
-                ## Assuming that the message is properly formatted, and has the activation string before it.
-                message = ctx.message.content[len(self.activation_string):]
+                ## Build a message string that we can compare with.
+                try:
+                    message = ctx.message.content[len(self.activation_string):]
+                except TypeError:
+                    message = ctx.message.content
+
+                ## Find the most similar command
                 most_similar_command = (None, 0)
-                for key, value in self.bot.commands.items():
+                for key in self.bot.commands.keys():
                     distance = StringSimilarity.similarity(key, message)
                     if (distance > most_similar_command[1]):
                         most_similar_command = (key, distance)
 
+                ## Calculate the output to give to the user
                 if (most_similar_command[1] > self.invalid_command_minimum_similarity):
                     help_text_chunks.append("Did you mean **{}{}**?".format(self.activation_string, most_similar_command[0]))
                 else:
                     help_text_chunks.append("Try the **{}help** page.".format(self.activation_string))
 
+                ## Dump output to user
                 await self.bot.say(" ".join(help_text_chunks))
                 return
 

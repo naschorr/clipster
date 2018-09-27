@@ -1,5 +1,5 @@
 {
-    "version"                               : "0.2.1",
+    "version"                               : "0.2.2",
     "admins"                                : ["Username#1234"],
     "activation_string"                     : "=",
     "description"                           : "A soundboard bot for Discord. Contribute or star me at https://github.com/naschorr/clipster",
@@ -15,6 +15,7 @@
     "ffmpeg_post_parameters"                : "-loglevel 16",
     "string_similarity_algorithm"           : "difflib",
     "invalid_command_minimum_similarity"    : "0.66",
+    "find_command_minimum_similarity"       : "0.5",
 
     "boto_enable"                           : false,
     "boto_resource"                         : "dynamodb",
