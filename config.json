@@ -15,6 +15,7 @@
     "ffmpeg_post_parameters"                : "-loglevel 16",
     "string_similarity_algorithm"           : "difflib",
     "invalid_command_minimum_similarity"    : "0.66",
+    "find_command_minimum_similarity"       : "0.5",
 
     "boto_enable"                           : false,
     "boto_resource"                         : "dynamodb",

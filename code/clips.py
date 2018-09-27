@@ -6,6 +6,7 @@ from discord.ext import commands
 
 import utilities
 import dynamo_helper
+from string_similarity import StringSimilarity
 
 ## Config
 CONFIG_OPTIONS = utilities.load_config()
@@ -55,6 +56,7 @@ class Clips:
         self.command_kwargs = command_kwargs
         self.command_names = []
         self.command_group_names = []
+        self.find_command_minimum_similarity = float(CONFIG_OPTIONS.get('find_command_minimum_similarity', 0.5))
 
         self.dynamo_db = dynamo_helper.DynamoHelper()
 
@@ -235,3 +237,45 @@ class Clips:
         command = self.bot.get_command(random_clip)
         await command.callback(self, ctx)
 
+
+    def _calcSubstringScore(self, message_split, description_split):
+        word_frequency = 0
+        for word in message_split:
+            if (word in description_split):
+                word_frequency += 1
+
+        return word_frequency / len(message_split)
+
+
+    ## Attempts to find the command whose description text most closely matches the provided message
+    @commands.command(pass_context=True, no_pm=True)
+    async def find(self, ctx, *, message):
+        message = ''.join(char for char in message.lower() if (char.isalnum() or char.isspace()))
+        ## Calculate how many times the words in the message show up in a given Clip's description
+        ## Todo: shrink instances of repeated letters down to a single letter in both message and description
+        ##       (ex. yeeeee => ye or reeeeeboot => rebot)
+        message_split = message.split(' ')
+        most_similar_command = (None, 0)
+        for clip_group in self.clip_groups.values():
+            for clip in clip_group.clips.values():
+                ## Todo: Maybe look into filtering obviously bad descriptions from the calculation somehow?
+                ##       A distance metric might be nice, but then if I could solve that problem, why not just use that
+                ##       distance in the first place and skip the substring check?
+
+                description = clip.kwargs.get(self.DESCRIPTION_KEY)
+                if (not description):
+                    continue
+
+                ## Build a weighted distance using a traditional similarity metric and the previously calculated word
+                ## frequency
+                distance =  (self._calcSubstringScore(message_split, description.split(' ')) * 0.67) + \
+                            (StringSimilarity.similarity(description, message) * 0.33)
+
+                if (distance > most_similar_command[1]):
+                    most_similar_command = (clip, distance)
+
+        if (most_similar_command[1] > self.find_command_minimum_similarity):
+            command = self.bot.get_command(most_similar_command[0].name)
+            await command.callback(self, ctx)
+        else:
+            await self.bot.say("I couldn't find anything close to that, sorry <@{}>.".format(ctx.message.author.id))
