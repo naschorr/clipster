@@ -212,9 +212,6 @@ class Clipster:
 
             utilities.debug_print(exception, debug_level=2)
 
-            import traceback
-            traceback.print_tb(exception.__traceback__)
-
             self.dynamo_db.put(dynamo_helper.DynamoItem(
                 ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False, str(exception)))
 
