@@ -212,9 +212,6 @@ class Clipster:
 
             utilities.debug_print(exception, debug_level=2)
 
-            import traceback
-            traceback.print_tb(exception.__traceback__)
-
             self.dynamo_db.put(dynamo_helper.DynamoItem(
                 ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False, str(exception)))
 
@@ -230,20 +227,7 @@ class Clipster:
                     "Sorry <@{}>, **{}{}** isn't a valid command.".format(ctx.message.author.id, ctx.prefix, ctx.invoked_with)
                 ]
 
-                ## Build a message string that we can compare with.
-                try:
-                    message = ctx.message.content[len(self.activation_string):]
-                except TypeError:
-                    message = ctx.message.content
-
-                ## Find the most similar command
-                most_similar_command = (None, 0)
-                for key in self.bot.commands.keys():
-                    distance = StringSimilarity.similarity(key, message)
-                    if (distance > most_similar_command[1]):
-                        most_similar_command = (key, distance)
-
-                ## Calculate the output to give to the user
+                most_similar_command = self.find_most_similar_command(ctx.message.content)
                 if (most_similar_command[1] > self.invalid_command_minimum_similarity):
                     help_text_chunks.append("Did you mean **{}{}**?".format(self.activation_string, most_similar_command[0]))
                 else:
@@ -279,6 +263,25 @@ class Clipster:
     def register_module(self, cls, is_cog, *init_args, **init_kwargs):
         self.module_manager.register(cls, is_cog, *init_args, **init_kwargs)
 
+
+    ## Finds the most similar command to the supplied one
+    def find_most_similar_command(self, command):
+        ## Build a message string that we can compare with.
+        try:
+            message = command[len(self.activation_string):]
+        except TypeError:
+            message = command
+
+        clip_commands = self.get_clips_cog().command_names
+
+        ## Find the most similar command
+        most_similar_command = (None, 0)
+        for key in clip_commands:
+            distance = StringSimilarity.similarity(key, message)
+            if (distance > most_similar_command[1]):
+                most_similar_command = (key, distance)
+
+        return most_similar_command
 
     ## Run the bot
     def run(self):
