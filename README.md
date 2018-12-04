@@ -7,4 +7,3 @@ Soundboard bot for Discord
 #### Todo:
 - [ ] Finish this readme
 - [ ] Decide on new permissions (37120064?)
-- [ ] Build a better system for playing clips. I'm thinking of adding an extra property to each clip in the manifests that denotes what's being said or a description of the clip. Users can type in what they think they remember the clip was, and some sort of string similarity algorithm can parse that and find the most similar clip to play.
