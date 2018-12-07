@@ -272,11 +272,12 @@ class Clipster:
         except TypeError:
             message = command
 
-        clip_commands = self.get_clips_cog().command_names
+        ## Get a list of all visible commands 
+        commands = [name for name, cmd in self.bot.commands.items() if not cmd.hidden]
 
         ## Find the most similar command
         most_similar_command = (None, 0)
-        for key in clip_commands:
+        for key in commands:
             distance = StringSimilarity.similarity(key, message)
             if (distance > most_similar_command[1]):
                 most_similar_command = (key, distance)
