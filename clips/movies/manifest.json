@@ -46,12 +46,6 @@
             "path":         "what-is-that.mp3"
         },
         {
-            "name":         "eerie",
-            "description":  "its just not right its really eerie here somethings fucky",
-            "help":         "Spooky scary.",
-            "path":         "eerie.mp3"
-        },
-        {
             "name":         "america",
             "description":  "america america america fuck yeah coming again to save the mother fucking day yeah america fuck yeah team america",
             "help":         "*freedom intensifies*",
@@ -122,6 +116,12 @@
             "description":  "noo",
             "help":         "DO NOT WAAAANT!",
             "path":         "nooo.mp3"
+        },
+        {
+            "name":         "shoot",
+            "description":  "buddy i am gonna shoot you in the face",
+            "help":         "Buddy! I'm gonna shoot you in the FACE!",
+            "path":         "shoot-you-in-the-face.mp3"
         }
     ]
 }
