@@ -3,13 +3,22 @@
 ## Clipster
 Soundboard bot for Discord
 
-## Activation
+## Activate it on your server!
 - Go to [this page](https://discordapp.com/oauth2/authorize?client_id=475695802350829568&scope=bot&permissions=104233024) on Discord's site.
 - Select the server that you want Clipster to be added to.
 - Hit the "Authorize" button.
-- Start playing clips! (_Hint:_ join a voice channel and type in `=help`. You should check out the [**Commands**](https://github.com/naschorr/clipster#commands) section of this readme, too!)
+- Start playing clips! (_Hint:_ join a voice channel and type in `=help`. You should check out the [**Commands**](https://github.com/naschorr/clipster#commands) section below, too!)
 
-## Installation
+## Basic Commands
+These commands allow for the basic operation of the bot, by anyone. Just type them into a public text channel while connected to a public voice channel. (Clipster can also read/join channels that you've given the permissions to)
+- Clipster is designed to play premade clips, which you can see via the `=help` interface. Give that a try first.
+- `=find [text]` - The bot will search its preloaded clips for the one whose contents most closely matches [text], and will display that command's name.
+- `=random` - Plays a random clip from the list of preloaded clips.
+- `=skip` - Skip a clip that you've requested, or start a vote to skip on someone else's clip.
+- `=summon` - Summons the bot to join your voice channel.
+- `=help` - Show the help screen.
+
+## Hosting it yourself
 - Make sure you've got [Python 3.6](https://www.python.org/downloads/) installed, and support for virtual environments (This assumes that you're on Python 3.6 with `venv` support, but older versions with `virtualenv` and `pyvenv` should also work.)
 - `cd` into the directory that you'd like the project to go (If you're on Linux, I'd recommend '/usr/local/bin')
 - `git clone https://github.com/naschorr/clipster`
@@ -36,20 +45,10 @@ Clipster as a Service (CaaS)
 - Get the service working with `sudo systemctl daemon-reload && systemctl enable clipster && systemctl start clipster --no-block`
 - Now you can control the Clipster service just like any other. For example, to restart: `sudo service clipster restart`
 
-## Usage
+## Running your Clipster installation
 - `cd` into the project's root
 - Activate the venv (`source bin/activate` on Linux, `.\Scripts\activate` on Windows)
 - Run `python code/clipster.py` to start Clipster
-
-## Commands
-These commands allow for the basic operation of the bot, by anyone.
-- `=find [text]` - The bot will search its preloaded clips for the one whose contents most closely matches [text], and will display that command's name.
-- `=random` - Plays a random clip from the list of preloaded clips.
-- `=skip` - Skip a clip that you've requested, or start a vote to skip on someone else's clip.
-- `=summon` - Summons the bot to join your voice channel.
-- `=help` - Show the help screen.
-
-Also be sure to check out the preset clips added to the bot via the help menu `=help`.
 
 ## Admin Commands
 Admin commands allow for some users to have a little more control over the bot. For these to work, the `admin` array in `config.json` needs to have the desired usernames added to it. Usernames should be in the `Username#1234` format that Discord uses.
