@@ -296,16 +296,7 @@ class Speech:
 
         state = self.get_speech_state(ctx.message.server)
         if(state.voice_client is None):
-            try:
-                await self.create_voice_client(voice_channel)
-            except Exception as exception:
-                utilities.debug_print(exception, debug_level=0)
-                self.dynamo_db.put(dynamo_helper.DynamoItem(
-                    ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False, str(exception)))
-
-                await self.bot.say("Sorry <@{}>, Discord won't let me join that voice channel right now."
-                    .format(ctx.message.author.id))
-                return
+            await self.create_voice_client(voice_channel)
 
         ## Create a player for the clip
         player = state.voice_client.create_ffmpeg_player(
