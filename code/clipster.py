@@ -220,6 +220,11 @@ class Clipster:
                     ## Todo: log this
                     return;
 
+            ## Handy for debugging
+            # import traceback
+            # print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+            # traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
+
             utilities.debug_print(exception, debug_level=2)
             self.dynamo_db.put(dynamo_helper.DynamoItem(
                 ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False, str(exception)))
@@ -231,7 +236,6 @@ class Clipster:
             if (    isinstance(exception, discord.HTTPException) or
                     isinstance(exception, discord.GatewayNotFound) or
                     isinstance(exception, discord.ConnectionClosed)):
-                print(exception, exception.__traceback__, flush=True);
                 await display_generic_discord_error()
                 return
 
