@@ -210,16 +210,6 @@ class Clipster:
             # discord.py uses reflection to set the destination chat channel for whatever reason (sans command ctx)
             _internal_channel = ctx.message.channel
 
-            ## Small helper to spit out some generic HAL-9000 styled error text.
-            async def display_generic_discord_error():
-                try:
-                    await self.bot.say("I'm sorry <@{}>, I'm afraid I can't do that.\n" \
-                        "Discord is having some issues that won't let me speak right now."
-                        .format(ctx.message.author.id))
-                except:
-                    ## Todo: log this
-                    return;
-
             ## Handy for debugging
             # import traceback
             # print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
@@ -229,23 +219,19 @@ class Clipster:
             self.dynamo_db.put(dynamo_helper.DynamoItem(
                 ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False, str(exception)))
 
-            ## Checking for discord.HTTPException, discord.GatewayNotFound and discord.ConnectionClosed should handle
-            ## the vast majority of external errors. The goal is to handle any potential errors that may come up not as
-            ## a result of the command the user attempted to invoke.
-            ## Todo: Add in additional checks as necessary.
-            if (    isinstance(exception, discord.HTTPException) or
-                    isinstance(exception, discord.GatewayNotFound) or
-                    isinstance(exception, discord.ConnectionClosed)):
-                await display_generic_discord_error()
-                return
-
             ## Attempt to find a command that's similar to the one they wanted. Otherwise just direct them to the help page
-            try:
+            most_similar_command = self.find_most_similar_command(ctx.message.content)
+
+            if (most_similar_command[0] == ctx.invoked_with):
+                ## Handle issues where the command is valid, but couldn't be completed for whatever reason.
+                await self.bot.say("I'm sorry <@{}>, I'm afraid I can't do that.\n" \
+                    "Discord is having some issues that won't let me speak right now."
+                    .format(ctx.message.author.id))
+            else:
                 help_text_chunks = [
                     "Sorry <@{}>, **{}{}** isn't a valid command.".format(ctx.message.author.id, ctx.prefix, ctx.invoked_with)
                 ]
 
-                most_similar_command = self.find_most_similar_command(ctx.message.content)
                 if (most_similar_command[1] > self.invalid_command_minimum_similarity):
                     help_text_chunks.append("Did you mean **{}{}**?".format(self.activation_string, most_similar_command[0]))
                 else:
@@ -254,11 +240,6 @@ class Clipster:
                 ## Dump output to user
                 await self.bot.say(" ".join(help_text_chunks))
                 return
-            except:
-                ## Otherwise, just default to a (generic) error message
-                await display_generic_discord_error()
-                return
-
 
     ## Methods
 
