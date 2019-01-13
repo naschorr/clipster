@@ -210,19 +210,33 @@ class Clipster:
             # discord.py uses reflection to set the destination chat channel for whatever reason (sans command ctx)
             _internal_channel = ctx.message.channel
 
-            utilities.debug_print(exception, debug_level=2)
+            ## Small helper to spit out some generic HAL-9000 styled error text.
+            async def display_generic_discord_error():
+                try:
+                    await self.bot.say("I'm sorry <@{}>, I'm afraid I can't do that.\n" \
+                        "Discord is having some issues that won't let me speak right now."
+                        .format(ctx.message.author.id))
+                except:
+                    ## Todo: log this
+                    return;
 
+            utilities.debug_print(exception, debug_level=2)
             self.dynamo_db.put(dynamo_helper.DynamoItem(
                 ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False, str(exception)))
 
-            ## Poorly handled (for now, until I can get more concrete examples in my database) error messages for users
-            if ("code =" in str(exception)):
-                await self.bot.say("Sorry <@{}>, Discord is having some issues that won't let me speak right now."
-                    .format(ctx.message.author.id))
+            ## Checking for discord.HTTPException, discord.GatewayNotFound and discord.ConnectionClosed should handle
+            ## the vast majority of external errors. The goal is to handle any potential errors that may come up not as
+            ## a result of the command the user attempted to invoke.
+            ## Todo: Add in additional checks as necessary.
+            if (    isinstance(exception, discord.HTTPException) or
+                    isinstance(exception, discord.GatewayNotFound) or
+                    isinstance(exception, discord.ConnectionClosed)):
+                print(exception, exception.__traceback__, flush=True);
+                await display_generic_discord_error()
                 return
 
             ## Attempt to find a command that's similar to the one they wanted. Otherwise just direct them to the help page
-            else:
+            try:
                 help_text_chunks = [
                     "Sorry <@{}>, **{}{}** isn't a valid command.".format(ctx.message.author.id, ctx.prefix, ctx.invoked_with)
                 ]
@@ -236,6 +250,11 @@ class Clipster:
                 ## Dump output to user
                 await self.bot.say(" ".join(help_text_chunks))
                 return
+            except:
+                ## Otherwise, just default to a (generic) error message
+                await display_generic_discord_error()
+                return
+
 
     ## Methods
 
