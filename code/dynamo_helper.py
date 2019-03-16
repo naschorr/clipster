@@ -1,11 +1,15 @@
 import boto3
 import base64
 import time
+import logging
 
 import utilities
 
 ## Config
 CONFIG_OPTIONS = utilities.load_config()
+
+## Logging
+logger = logging.getLogger(__name__)
 
 class DynamoItem:
     def __init__(self, discord_context, query, command, is_valid, error=None):
@@ -90,7 +94,7 @@ class DynamoHelper:
                 return self.table.put_item(Item=dynamo_item.getDict())
             except Exception as e:
                 ## Don't let issues with dynamo tank the bot's functionality
-                utilities.debug_print("Exception while performing dynamo put", e, debug_level=1)
+                logger.exception("Exception while performing dynamo put")
                 return None
         else:
             return None

@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import logging
 from discord import errors
 from discord.ext import commands
 
@@ -11,6 +12,8 @@ from string_similarity import StringSimilarity
 ## Config
 CONFIG_OPTIONS = utilities.load_config()
 
+## Logging
+logger = logging.getLogger(__name__)
 
 class Clip:
     def __init__(self, name, path, **kwargs):
@@ -33,7 +36,7 @@ class ClipGroup:
         if (isinstance(clip, Clip)):
             self.clips[clip.name] = clip
         else:
-            utilities.debug_print("Couldn't add clip: {}, as it's not a valid Clip object".format(clip), debug_level=2)
+            logger.warning("Couldn't add clip: {}, as it's not a valid Clip object".format(clip))
 
 
 class Clips:
@@ -127,7 +130,7 @@ class Clips:
                     self.add_clip(clip)
                     clip_group.add_clip(clip)
                 except Exception as e:
-                    utilities.debug_print(e, "Skipping...", debug_level=2)
+                    logger.warn("Couldn't add clip", exc_info=True)
                 else:
                     counter += 1
 
@@ -140,7 +143,9 @@ class Clips:
                 self.bot.add_command(help_command)
                 self.command_group_names.append(clip_group.key) # Keep track of the 'parent' commands for later use
 
-        print("Loaded {} clip{}.".format(counter, "s" if counter != 1 else ""))
+        loaded_clips_string = "Loaded {} clip{}.".format(counter, "s" if counter != 1 else "")
+        print(loaded_clips_string)
+        logger.info(loaded_clips_string)
         return counter
 
 
@@ -179,7 +184,7 @@ class Clips:
                     clips.append(clip)
                     self.command_names.append(clip_name)
                 except Exception as e:
-                    utilities.debug_print("Error loading {} from {}. Skipping...".format(clip_raw, fd), e, debug_level=3)
+                    logger.warning("Error loading {} from {}. Skipping...".format(clip_raw, fd), exc_info=True)
 
         ## Todo: This doesn't actually result in the clips in the help menu being sorted?
         return sorted(clips, key=lambda clip: clip.name)
@@ -193,6 +198,7 @@ class Clips:
         self.command_group_names = []
         self.clip_groups = {} # yay garbage collection
 
+        logger.info("Removed clips")
         return True
 
 
