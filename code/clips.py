@@ -143,9 +143,7 @@ class Clips:
                 self.bot.add_command(help_command)
                 self.command_group_names.append(clip_group.key) # Keep track of the 'parent' commands for later use
 
-        loaded_clips_string = "Loaded {} clip{}.".format(counter, "s" if counter != 1 else "")
-        print(loaded_clips_string)
-        logger.info(loaded_clips_string)
+        logger.info("Loaded {} clip{}.".format(counter, "s" if counter != 1 else ""))
         return counter
 
 

@@ -5,6 +5,7 @@ import os
 import time
 import pathlib
 import logging
+from logging.handlers import RotatingFileHandler
 from collections import OrderedDict
 
 import discord
@@ -120,9 +121,7 @@ class ModuleManager:
         try:
             importlib.reload(module)
         except Exception as e:
-            reload_error_string = "Error: ({}) reloading module: {}".format(e, module)
-            logger.error(reload_error_string)
-            print(reload_error_string)
+            logger.error("Error: ({}) reloading module: {}".format(e, module))
             return False
         else:
             return True
@@ -157,14 +156,11 @@ class ModuleManager:
                 else:
                     self._reload_module(module_name)
             except Exception as e:
-                print("Error: {} when reloading cog: {}".format(e, module_name))
                 logger.error("Error: {} when reloading cog: {}".format(e, module_name))
             else:
                 counter += 1
 
-        loaded_string = "Loaded {}/{} cogs.".format(counter, len(self.modules))
-        logger.info(loaded_string)
-        print(loaded_string)
+        logger.info("Loaded {}/{} cogs.".format(counter, len(self.modules)))
         return counter
 
 
@@ -213,9 +209,7 @@ class Clipster:
             bot_status = discord.Game(type=0, name="Use {}help".format(self.activation_string))
             await self.bot.change_presence(game=bot_status)
 
-            ready_string = "Logged in as '{}' (version: {}), (id: {})".format(self.bot.user.name, self.version, self.bot.user.id)
-            logger.info(ready_string)
-            print(ready_string)
+            logger.info("Logged in as '{}' (version: {}), (id: {})".format(self.bot.user.name, self.version, self.bot.user.id))
 
         ## Give some feedback to users when their command doesn't execute.
         @self.bot.event
@@ -316,8 +310,25 @@ class Clipster:
 
 
 def initialize_logging():
-    logger.basicConfig(format="%(asctime)s - %(module)s - %(funcName)s - %(levelname)s - %(message)s")
-    logger.setLevel(CONFIG_OPTIONS.get("log_level", "DEBUG"))
+    FORMAT = "%(asctime)s - %(module)s - %(funcName)s - %(levelname)s - %(message)s"
+    formatter = logging.Formatter(FORMAT)
+    logging.basicConfig(format=FORMAT)
+
+    log_level = str(CONFIG_OPTIONS.get("log_level", "DEBUG"))
+    if (log_level == "DEBUG"):
+        logger.setLevel(logging.DEBUG)
+    elif (log_level == "INFO"):
+        logger.setLevel(logging.INFO)
+    elif (log_level == "WARNING"):
+        logger.setLevel(logging.WARNING)
+    elif (log_level == "ERROR"):
+        logger.setLevel(logging.ERROR)
+    elif (log_level == "CRITICAL"):
+        logger.setLevel(logging.CRITICAL)
+    else:
+        logger.setLevel(logging.DEBUG)
+
+    logger.info("Set log level to {}".format(logger.level))
 
     ## Get the directory containing the logs and make sure it exists, creating it if it doesn't
     log_dir = CONFIG_OPTIONS.get("log_dir", os.path.sep.join([utilities.get_root_path(), "logs"]))
@@ -328,8 +339,10 @@ def initialize_logging():
     ## Setup and add the rotating log handler to the logger
     max_bytes = CONFIG_OPTIONS.get("log_max_bytes", 1024 * 1024 * 10)   # 10 MB
     backup_count = CONFIG_OPTIONS.get("log_backup_count", 10)
-    rotating_log_handler = logging.handlers.RotatingFileHandler(log_path, maxBytes=max_bytes, backupCount=backup_count)
+    rotating_log_handler = RotatingFileHandler(log_path, maxBytes=max_bytes, backupCount=backup_count)
+    rotating_log_handler.setFormatter(formatter)
     logger.addHandler(rotating_log_handler)
+
 
 if (__name__ == "__main__"):
     initialize_logging()
