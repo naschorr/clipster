@@ -4,6 +4,7 @@ import sys
 import asyncio
 import time
 import inspect
+import logging
 from math import ceil
 from random import choice
 
@@ -15,6 +16,8 @@ from discord.ext import commands
 ## Config
 CONFIG_OPTIONS = utilities.load_config()
 
+## Logging
+logger = logging.getLogger(__name__)
 
 class SpeechEntry:
     def __init__(self, requester, channel, player, file_path, callback=None):
@@ -167,7 +170,7 @@ class Speech:
             try:
                 await state.voice_client.move_to(channel)
             except Exception as e:
-                utilities.debug_print("Voice client exists", e, debug_level=2)
+                logger.warning("Attempted to move to voice channel where a voice client already exists.")
                 return False
             else:
                 return True
@@ -176,7 +179,7 @@ class Speech:
         try:
             await self.create_voice_client(channel)
         except (discord.ClientException, discord.InvalidArgument) as e:
-            utilities.debug_print("Voice client doesn't exist", e, debug_level=2)
+            logger.exception("Attempted to created voice client")
             return False
         else:
             return True
@@ -205,9 +208,8 @@ class Speech:
         ## Attempt to leave the state's channel
         await asyncio.sleep(self.channel_timeout)
         if(state.last_speech_time + self.channel_timeout <= state.get_current_time() and state.voice_client):
-            utilities.debug_print("Leaving channel", debug_level=4)
-            if(len(self.channel_timeout_clip_paths) > 0):
-                ## Todo: play the chosen clip
+            logger.debug("Attempting to leave channel {}, clip_paths: {}".format(state.voice_client.channel.id, len(self.channel_timeout_clip_paths)))
+            if (len(self.channel_timeout_clip_paths) > 0):
                 await self._play_clip_via_speech_state(state, os.path.sep.join([utilities.get_root_path(), choice(self.channel_timeout_clip_paths)]), leave_channel_closure)
             else:
                 await leave_channel_closure()
@@ -320,7 +322,7 @@ class Speech:
     async def _play_clip_via_speech_state(self, speech_state, clip_path, callback=None):
         ## Make sure clip_path points to an actual file in the clips folder
         if (not os.path.isfile(clip_path)):
-            utilities.debug_print("Unable to find clip at: {}, exiting...", debug_level=2)
+            logger.error("Unable to find clip at: {}".format(clip_path))
             return False
 
         ## Build a player for the clip

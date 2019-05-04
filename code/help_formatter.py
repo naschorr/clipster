@@ -1,5 +1,6 @@
 import itertools
 import inspect
+import logging
 
 from discord.ext.commands.formatter import HelpFormatter, Paginator
 from discord.ext.commands.core import Command
@@ -10,6 +11,8 @@ import dynamo_helper
 ## Config
 CONFIG_OPTIONS = utilities.load_config()
 
+## Logging
+logger = logging.getLogger(__name__)
 
 class ClipsterHelpFormatter(HelpFormatter):
     @property

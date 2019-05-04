@@ -72,7 +72,7 @@ Admin commands allow for some users to have a little more control over the bot. 
 - **skip_percentage** - Int - The minimum percentage of other users who need to request a skip before the currently playing speech will be skipped.
 
 #### Bot Configuration
-- **debug_level** - Int - The maximum threshold for printing debug statements to the terminal. Debug statements with a level of `0` are the most important, while statements with a level of `4` are the least important. See `debug_print()` in `utilities.py`.
+- **log_level** - String - The minimum error level to log. Potential values are `DEBUG`, `INFO`, `WARNING`, `ERROR`, and `CRITICAL`, in order of severity (ascending). For example, choosing the `WARNING` log level will log everything tagged as `WARNING`, `ERROR`, and `CRITICAL`.
 - **token_file_path** - String - Force the bot to use a specific token, rather than the normal `token.json` file.
 - **clips_folder_path** - String - Force the bot to use a specific clips folder, rather than the normal `clips/` folder.
 - **ffmpeg_parameters** - String - Options to send to the FFmpeg executable before the `-i` flag.
