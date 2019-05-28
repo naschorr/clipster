@@ -227,7 +227,14 @@ class Clips:
             ## Pass a self arg to it now that the command.instance is set to self
             speech_cog = self.speech_cog
             play_clip = speech_cog.play_clip
-            await play_clip(ctx, path)
+
+            ## Attempt to get a target channel
+            try:
+                target = ctx.message.mentions[0]
+            except:
+                target = None
+
+            await play_clip(ctx, path, target_member=target)
 
         return _clip_callback
 

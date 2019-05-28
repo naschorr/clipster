@@ -12,6 +12,7 @@ import utilities
 import dynamo_helper
 from discord import errors
 from discord.ext import commands
+from discord.member import Member
 
 ## Config
 CONFIG_OPTIONS = utilities.load_config()
@@ -253,6 +254,7 @@ class Speech:
             self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, True))
 
         voter = ctx.message.author
+        ## Todo: Add extra skip logic when sending preset phrases to someone else?
         if(voter == state.current_speech.requester):
             await self.bot.say("<@{}> skipped their own speech.".format(voter.id))
             await state.skip_speech()
@@ -278,8 +280,18 @@ class Speech:
 
 
     ## Interface for playing the clip for the invoker's channel
-    async def play_clip(self, ctx, clip_path):
+    async def play_clip(self, ctx, clip_path, target_member=None):
         """Plays the given clip aloud to your channel"""
+
+        ## Verify that the target/requester is in a channel
+        if (not target_member or not isinstance(target_member, Member)):
+            target_member = ctx.message.author
+
+        voice_channel = target_member.voice_channel
+        if(voice_channel is None):
+            await self.bot.say("<@{}> isn't in a voice channel.".format(target_member.id))
+            self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False))
+            return False
 
         ## Check that the requester is in a voice channel
         voice_channel = ctx.message.author.voice_channel
