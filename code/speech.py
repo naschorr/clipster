@@ -293,14 +293,6 @@ class Speech:
             self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False))
             return False
 
-        ## Check that the requester is in a voice channel
-        voice_channel = ctx.message.author.voice_channel
-        if (voice_channel is None):
-            await self.bot.say("<@{}> isn't in a voice channel.".format(ctx.message.author.id))
-            self.dynamo_db.put(dynamo_helper.DynamoItem(
-                ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False))
-            return False
-
         ## Make sure clip_path points to an actual file in the clips folder
         if (not os.path.isfile(clip_path)):
             await self.bot.say("Sorry, <@{}>, your clip couldn't be played.".format(ctx.message.author.id))
