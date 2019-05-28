@@ -1,4 +1,5 @@
 import inspect
+import logging
 
 import utilities
 import dynamo_helper
@@ -7,6 +8,8 @@ from discord.ext import commands
 ## Config
 CONFIG_OPTIONS = utilities.load_config()
 
+## Logging
+logger = logging.getLogger(__name__)
 
 class Admin:
     ## Keys

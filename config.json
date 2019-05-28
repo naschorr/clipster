@@ -1,5 +1,5 @@
 {
-    "version"                               : "0.2.5",
+    "version"                               : "0.3.0",
     "admins"                                : ["Username#1234"],
     "activation_string"                     : "=",
     "description"                           : "A soundboard bot for Discord. Contribute or star me at https://github.com/naschorr/clipster",
@@ -8,7 +8,10 @@
     "skip_votes"                            : 3,
     "skip_percentage"                       : 33,
 
-    "debug_level"                           : 2,
+    "log_level"                             : "DEBUG",
+    "log_dir"                               : "logs",
+    "log_max_bytes"                         : 10485760,
+    "log_backup_count"                      : 10,
     "token_file_path"                       : "token.json",
     "clips_folder_path"                     : "clips",
     "ffmpeg_parameters"                     : "-ac 2",

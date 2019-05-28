@@ -3,6 +3,9 @@ import inspect
 import sys
 import os
 import time
+import pathlib
+import logging
+from logging.handlers import RotatingFileHandler
 from collections import OrderedDict
 
 import discord
@@ -29,6 +32,8 @@ if not discord.opus.is_loaded():
 ## Config
 CONFIG_OPTIONS = utilities.load_config()
 
+## Logging
+logger = logging.getLogger(__name__)
 
 class ModuleEntry:
     def __init__(self, cls, is_cog, *init_args, **init_kwargs):
@@ -74,6 +79,7 @@ class ModuleManager:
         if(not self.bot.get_cog(module_entry.name) and module_entry.is_cog):
             cog_cls = module_entry.get_class_callable()
             self.bot.add_cog(cog_cls(*module_entry.args, **module_entry.kwargs))
+            logger.info("Registered cog: {} on bot.".format(module_entry.name))
 
 
     ## Finds and registers modules inside the modules folder
@@ -115,7 +121,7 @@ class ModuleManager:
         try:
             importlib.reload(module)
         except Exception as e:
-            print("Error: ({}) reloading module: {}".format(e, module))
+            logger.error("Error: ({}) reloading module: {}".format(e, module))
             return False
         else:
             return True
@@ -150,11 +156,11 @@ class ModuleManager:
                 else:
                     self._reload_module(module_name)
             except Exception as e:
-                print("Error: {} when reloading cog: {}".format(e, module_name))
+                logger.error("Error: {} when reloading cog: {}".format(e, module_name))
             else:
                 counter += 1
 
-        print("Loaded {}/{} cogs.".format(counter, len(self.modules)))
+        logger.info("Loaded {}/{} cogs.".format(counter, len(self.modules)))
         return counter
 
 
@@ -202,7 +208,8 @@ class Clipster:
         async def on_ready():
             bot_status = discord.Game(type=0, name="Use {}help".format(self.activation_string))
             await self.bot.change_presence(game=bot_status)
-            print("Logged in as '{}' (version: {}), (id: {})".format(self.bot.user.name, self.version, self.bot.user.id))
+
+            logger.info("Logged in as '{}' (version: {}), (id: {})".format(self.bot.user.name, self.version, self.bot.user.id))
 
         ## Give some feedback to users when their command doesn't execute.
         @self.bot.event
@@ -215,7 +222,8 @@ class Clipster:
             # print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
             # traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
 
-            utilities.debug_print(exception, debug_level=2)
+            logger.exception("on_command_error")
+
             self.dynamo_db.put(dynamo_helper.DynamoItem(
                 ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False, str(exception)))
 
@@ -294,16 +302,53 @@ class Clipster:
         try:
             self.bot.run(utilities.load_json(os.path.sep.join([utilities.get_root_path(), self.token_file_path]))["token"])
         except RuntimeError as e:
-            utilities.debug_print("Critical Runtime Error when running bot:", e, debug_level=0)
+            logger.critical("Critical runtime error when running the bot", exc_info=True)
         except Exception as e:
-            utilities.debug_print("Critical exception when running bot:", e, debug_level=0)
+            logger.critical("Critical exception when running the bot", exc_info=True)
             time.sleep(1)
             self.run()
 
 
-if(__name__ == "__main__"):
+def initialize_logging():
+    FORMAT = "%(asctime)s - %(module)s - %(funcName)s - %(levelname)s - %(message)s"
+    formatter = logging.Formatter(FORMAT)
+    logging.basicConfig(format=FORMAT)
+
+    log_level = str(CONFIG_OPTIONS.get("log_level", "DEBUG"))
+    if (log_level == "DEBUG"):
+        logger.setLevel(logging.DEBUG)
+    elif (log_level == "INFO"):
+        logger.setLevel(logging.INFO)
+    elif (log_level == "WARNING"):
+        logger.setLevel(logging.WARNING)
+    elif (log_level == "ERROR"):
+        logger.setLevel(logging.ERROR)
+    elif (log_level == "CRITICAL"):
+        logger.setLevel(logging.CRITICAL)
+    else:
+        logger.setLevel(logging.DEBUG)
+
+    logger.info("Set log level to {}".format(logger.level))
+
+    ## Get the directory containing the logs and make sure it exists, creating it if it doesn't
+    log_dir = CONFIG_OPTIONS.get("log_dir", os.path.sep.join([utilities.get_root_path(), "logs"]))
+    pathlib.Path(log_dir).mkdir(parents=True, exist_ok=True)    # Basically a mkdir -p $log_dir
+
+    log_path = os.path.sep.join([log_dir, "clipster.log"])
+
+    ## Setup and add the rotating log handler to the logger
+    max_bytes = CONFIG_OPTIONS.get("log_max_bytes", 1024 * 1024 * 10)   # 10 MB
+    backup_count = CONFIG_OPTIONS.get("log_backup_count", 10)
+    rotating_log_handler = RotatingFileHandler(log_path, maxBytes=max_bytes, backupCount=backup_count)
+    rotating_log_handler.setFormatter(formatter)
+    logger.addHandler(rotating_log_handler)
+
+
+if (__name__ == "__main__"):
+    initialize_logging()
+
     clipster = Clipster()
-    # clipster.register_module(ArbitraryClass(*init_args, **init)kwargs))
+    # clipster.register_module(ArbitraryClass(*init_args, **init_kwargs))
     # or,
     # clipster.add_cog(ArbitaryClass(*args, **kwargs))
     clipster.run()

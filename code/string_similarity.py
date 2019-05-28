@@ -1,3 +1,4 @@
+import logging
 from difflib import SequenceMatcher
 
 import utilities
@@ -5,6 +6,8 @@ import utilities
 ## Config
 CONFIG_OPTIONS = utilities.load_config()
 
+## Logging
+logger = logging.getLogger(__name__)
 
 class StringSimilarity:
     ## https://stackoverflow.com/questions/17388213/find-the-similarity-metric-between-two-strings
