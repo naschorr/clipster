@@ -15,7 +15,6 @@ These commands allow for the basic operation of the bot, by anyone. Just type th
 - `=find [text]` - The bot will search its preloaded clips for the one whose contents most closely matches [text], and will display that command's name.
 - `=random` - Plays a random clip from the list of preloaded clips.
 - `=skip` - Skip a clip that you've requested, or start a vote to skip on someone else's clip.
-- `=summon` - Summons the bot to join your voice channel.
 - `=help` - Show the help screen.
 
 ## Hosting it yourself
