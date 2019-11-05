@@ -1,6 +1,6 @@
 {
     "version"                               : "1.0.0",
-    "admins"                                : ["Ranol#3716"],
+    "admins"                                : ["Username#1234"],
     "activation_string"                     : "=",
     "description"                           : "A soundboard bot for Discord. Contribute or star me at https://github.com/naschorr/clipster",
     "channel_timeout_seconds"               : 20,
