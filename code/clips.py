@@ -1,9 +1,10 @@
 import json
 import os
 import random
+import asyncio
 import logging
-from discord import errors
 from discord.ext import commands
+from discord.ext.commands.errors import MissingRequiredArgument
 
 import utilities
 import dynamo_helper
@@ -39,7 +40,7 @@ class ClipGroup:
             logger.warning("Couldn't add clip: {}, as it's not a valid Clip object".format(clip))
 
 
-class Clips:
+class Clips(commands.Cog):
     ## Keys
     CLIPS_FOLDER_PATH_KEY = "clips_folder_path"
     MANIFEST_FILE_NAME_KEY = "manifest.json"
@@ -81,7 +82,7 @@ class Clips:
     ## Methods
 
     ## Removes all existing clips when the cog is unloaded
-    def __unload(self):
+    def cog_unload(self):
         self.remove_clips()
 
 
@@ -138,8 +139,9 @@ class Clips:
             if(counter > starting_count):
                 self.clip_groups[clip_group.key] = clip_group
 
-                ## Set up a dummy command for the category, to help with the help interface. See help_formatter.py
-                help_command = commands.Command(clip_group.key, lambda noop: None, hidden=True, no_pm=True)
+                ## Set up a dummy command for the category, to assist with creating the help interface.
+                ## asyncio.sleep is just a dummy command since commands.Command needs some kind of async callback
+                help_command = commands.Command(self._create_noop_callback(), name=clip_group.key, hidden=True, no_pm=True)
                 self.bot.add_command(help_command)
                 self.command_group_names.append(clip_group.key) # Keep track of the 'parent' commands for later use
 
@@ -207,8 +209,8 @@ class Clips:
 
         ## Manually build command to be added
         command = commands.Command(
-            clip.name,
             self._create_clip_callback(clip.path),
+            name = clip.name,
             **clip.kwargs,
             **self.command_kwargs
         )
@@ -220,10 +222,22 @@ class Clips:
         self.bot.add_command(command)
 
 
-    ## Build a dynamic callback to invoke the bot's say method
+    def _create_noop_callback(self):
+        '''
+        Build an async noop callback. This is used as a dummy callback for the help commands that make up the command
+        categories
+        '''
+
+        async def _noop_callback(ctx):
+            await asyncio.sleep(0)
+
+        return _noop_callback
+
+
     def _create_clip_callback(self, path):
-        ## Create a callback for speech.say
-        async def _clip_callback(self, ctx):
+        '''Build a dynamic callback to invoke the bot's play_clip method'''
+
+        async def _clip_callback(ctx):
             ## Pass a self arg to it now that the command.instance is set to self
             speech_cog = self.speech_cog
             play_clip = speech_cog.play_clip
@@ -240,13 +254,13 @@ class Clips:
 
 
     ## Says a random clip from the added clips
-    @commands.command(pass_context=True, no_pm=True)
+    @commands.command(no_pm=True)
     async def random(self, ctx):
         """Says a random clip from the list of clips."""
 
         random_clip = random.choice(self.command_names)
         command = self.bot.get_command(random_clip)
-        await command.callback(self, ctx)
+        await command.callback(ctx)
 
 
     def _calcSubstringScore(self, message, description):
@@ -262,11 +276,18 @@ class Clips:
         return word_frequency / len(message_split)
 
 
-    ## Attempts to find the command whose description text most closely matches the provided message
-    @commands.command(pass_context=True, no_pm=True)
-    async def find(self, ctx, *, message):
+    @commands.command(no_pm=True)
+    async def find(self, ctx, *, search_text = None):
+        '''Find clips that are similar to the search text'''
+
+        ## This method isn't ideal, as it breaks the command's signature. However it's the least bad option until
+        ## Command.error handling doesn't always call the global on_command_error
+        if (search_text is None):
+            await self.find_error(ctx, MissingRequiredArgument(ctx.command.params['search_text']))
+            return
+
         ## Strip all non alphanumeric and non whitespace characters out of the message
-        message = ''.join(char for char in message.lower() if (char.isalnum() or char.isspace()))
+        message = ''.join(char for char in search_text.lower() if (char.isalnum() or char.isspace()))
 
         most_similar_command = (None, 0)
         for clip_group in self.clip_groups.values():
@@ -290,6 +311,21 @@ class Clips:
 
         if (most_similar_command[1] > self.find_command_minimum_similarity):
             command = self.bot.get_command(most_similar_command[0].name)
-            await command.callback(self, ctx)
+            await command.callback(ctx)
         else:
-            await self.bot.say("I couldn't find anything close to that, sorry <@{}>.".format(ctx.message.author.id))
+            await ctx.send("I couldn't find anything close to that, sorry <@{}>.".format(ctx.message.author.id))
+
+
+    @find.error
+    async def find_error(self, ctx, error):
+        '''
+        Find command error handler. Addresses some common error scenarios that on_command_error doesn't really help with
+        '''
+        
+        if (isinstance(error, MissingRequiredArgument)):
+            output_raw = "Sorry <@{}>, but I need something to search for! Why not try: **{}find {}**?"
+            await ctx.send(output_raw.format(
+                ctx.message.author.id,
+                CONFIG_OPTIONS.get("activation_string"),
+                random.choice(self.command_names)
+            ))

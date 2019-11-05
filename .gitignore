@@ -20,6 +20,7 @@ share/
 *.vscode
 *.sublime-project
 *.sublime-workspace
+*.code-workspace
 
 # Ignore gitattributes
 .gitattributes
@@ -40,3 +41,7 @@ token.json
 clips/*
 !clips/movies/*
 !clips/internet/*
+
+# Ignore logs
+*.log
+*/log/*.log

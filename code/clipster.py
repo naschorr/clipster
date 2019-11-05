@@ -17,7 +17,7 @@ import speech
 import admin
 import clips
 import dynamo_helper
-import help_formatter
+import help_command
 from string_similarity import StringSimilarity
 
 
@@ -190,10 +190,12 @@ class Clipster:
         ## Init the bot and module manager
         self.bot = commands.Bot(
             command_prefix=commands.when_mentioned_or(self.activation_string),
-            formatter=help_formatter.ClipsterHelpFormatter(),
             description=self.description
         )
         self.module_manager = ModuleManager(self, self.bot)
+
+        ## Apply customized HelpCommand
+        self.bot.help_command = help_command.ClipsterHelpCommand()
 
         ## Register the modules (Order of registration is important, make sure dependancies are loaded first)
         self.module_manager.register(speech.Speech, True, self.bot)
@@ -206,24 +208,18 @@ class Clipster:
         ## Give some feedback for when the bot is ready to go, and provide some help text via the 'playing' status
         @self.bot.event
         async def on_ready():
+            ## todo: Activity instead of Game? Potentially remove "Playing" text below bot
             bot_status = discord.Game(type=0, name="Use {}help".format(self.activation_string))
-            await self.bot.change_presence(game=bot_status)
+            await self.bot.change_presence(activity=bot_status)
 
             logger.info("Logged in as '{}' (version: {}), (id: {})".format(self.bot.user.name, self.version, self.bot.user.id))
 
-        ## Give some feedback to users when their command doesn't execute.
+
         @self.bot.event
-        async def on_command_error(exception, ctx):
-            # discord.py uses reflection to set the destination chat channel for whatever reason (sans command ctx)
-            _internal_channel = ctx.message.channel
-
-            ## Handy for debugging
-            # import traceback
-            # print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-            # traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
-
-            logger.exception("on_command_error")
-
+        async def on_command_error(ctx, exception):
+            '''Handles command errors. Attempts to find a similar command and suggests it, otherwise directs the user to the help prompt.'''
+            
+            logger.exception("Unable to process command.", exc_info=exception)
             self.dynamo_db.put(dynamo_helper.DynamoItem(
                 ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False, str(exception)))
 
@@ -232,7 +228,7 @@ class Clipster:
 
             if (most_similar_command[0] == ctx.invoked_with):
                 ## Handle issues where the command is valid, but couldn't be completed for whatever reason.
-                await self.bot.say("I'm sorry <@{}>, I'm afraid I can't do that.\n" \
+                await ctx.send("I'm sorry <@{}>, I'm afraid I can't do that.\n" \
                     "Discord is having some issues that won't let me speak right now."
                     .format(ctx.message.author.id))
             else:
@@ -246,7 +242,7 @@ class Clipster:
                     help_text_chunks.append("Try the **{}help** page.".format(self.activation_string))
 
                 ## Dump output to user
-                await self.bot.say(" ".join(help_text_chunks))
+                await ctx.send(" ".join(help_text_chunks))
                 return
 
     ## Methods
@@ -285,7 +281,7 @@ class Clipster:
             message = command
 
         ## Get a list of all visible commands 
-        commands = [name for name, cmd in self.bot.commands.items() if not cmd.hidden]
+        commands = [cmd.name for cmd in self.bot.commands if not cmd.hidden]
 
         ## Find the most similar command
         most_similar_command = (None, 0)
@@ -295,6 +291,7 @@ class Clipster:
                 most_similar_command = (key, distance)
 
         return most_similar_command
+
 
     ## Run the bot
     def run(self):
