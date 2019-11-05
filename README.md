@@ -7,7 +7,7 @@ Soundboard bot for Discord
 - Go to [this page](https://discordapp.com/oauth2/authorize?client_id=475695802350829568&scope=bot&permissions=104233024) on Discord's site.
 - Select the server that you want Clipster to be added to.
 - Hit the "Authorize" button.
-- Start playing clips! (_Hint:_ join a voice channel and type in `=help`. You should check out the [**Commands**](https://github.com/naschorr/clipster#commands) section below, too!)
+- Start playing clips! (_Hint:_ join a voice channel and type in `=help`. You should check out the [**Commands**](https://github.com/naschorr/clipster#basic-commands) section below, too!)
 
 ## Basic Commands
 These commands allow for the basic operation of the bot, by anyone. Just type them into a public text channel while connected to a public voice channel. (Clipster can also read/join channels that you've given the permissions to)
