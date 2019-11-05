@@ -52,7 +52,7 @@ class ClipsterHelpCommand(commands.DefaultHelpCommand):
         """
         # Ending note logic from HelpFormatter.format
         command_name = self.context.invoked_with
-        ending_note = "Check out the other clip categories! Why not try '{0}{1} {2}?'".format(
+        ending_note = "Check out the other clip categories! Why not try '{0}{1} {2}'?".format(
             self.clean_prefix,
             command_name,
             random.choice(categories)
