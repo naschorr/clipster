@@ -19,7 +19,7 @@ These commands allow for the basic operation of the bot, by anyone. Just type th
 - `=help` - Show the help screen.
 
 ## Hosting it yourself
-- Make sure you've got [Python 3.6](https://www.python.org/downloads/) installed, and support for virtual environments (This assumes that you're on Python 3.6 with `venv` support, but older versions with `virtualenv` and `pyvenv` should also work.)
+- Make sure you've got [Python 3.6](https://www.python.org/downloads/) installed, and support for virtual environments (This assumes that you're on Python 3.6 with `venv` support, but you can also use the old `virtualenv` commands via the `python-virtualenv` package)
 - `cd` into the directory that you'd like the project to go (If you're on Linux, I'd recommend '/usr/local/bin')
 - `git clone https://github.com/naschorr/clipster`
 - `python3 -m venv clipster/`
