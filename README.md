@@ -65,13 +65,16 @@ Admin commands allow for some users to have a little more control over the bot. 
 - **admins** - Array - Array of Discord usernames who have access to `\admin` commands. Uses `Username#1234` format.
 - **activation_string** - String - The string that'll activate the Discord bot from chat messages.
 - **description** - String - The bot's description. This is seen in the help interface.
-- **channel_timeout** - Int - The time in seconds before the bot will leave its current voice channel due to inactivity.
+- **channel_timeout_seconds** - Int - The time in seconds before the bot will leave its current voice channel due to inactivity.
 - **channel_timeout_clip_paths** - Array - Array of paths to clips that the bot can speak right before it leaves the channel after it times out from inactivity. One clip is chosen randomly from the array.
 - **skip_votes** - Int - The minimum number of votes needed by a channel to skip the currently playing speech.
 - **skip_percentage** - Int - The minimum percentage of other users who need to request a skip before the currently playing speech will be skipped.
 
 #### Bot Configuration
 - **log_level** - String - The minimum error level to log. Potential values are `DEBUG`, `INFO`, `WARNING`, `ERROR`, and `CRITICAL`, in order of severity (ascending). For example, choosing the `WARNING` log level will log everything tagged as `WARNING`, `ERROR`, and `CRITICAL`.
+- **log_dir** - String - The path (relative to the root) where logs should be stored.
+- **log_max_bytes** - Int - The maximum size (in bytes) of a single log, before it should be rotated out. Defaults to 10MB.
+- **log_backup_count** - Int - The maximum number of logs to keep before deleting the oldest ones.
 - **token_file_path** - String - Force the bot to use a specific token, rather than the normal `token.json` file.
 - **clips_folder_path** - String - Force the bot to use a specific clips folder, rather than the normal `clips/` folder.
 - **ffmpeg_parameters** - String - Options to send to the FFmpeg executable before the `-i` flag.
