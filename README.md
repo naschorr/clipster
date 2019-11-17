@@ -25,7 +25,7 @@ These commands allow for the basic operation of the bot, by anyone. Just type th
     + You may need to run: `apt install python3-venv` to enable virtual environments for Python 3 on Linux
 - Activate your newly created venv
 - `pip install -r requirements.txt`
-    + If you run into issues during PyNaCl's installation, you may need to run: `apt install build-essential libffi-dev python3.5-dev` to install some supplemental features for the setup process.
+    + If you run into issues during PyNaCl's installation, you may need to run: `apt install build-essential libffi-dev python3.6-dev` to install some supplemental features for the setup process.
 - Make sure the [FFmpeg executable](https://www.ffmpeg.org/download.html) is in your system's `PATH` variable
 - Create a [Discord app](https://discordapp.com/developers/applications/me), flag it as a bot, and put the bot token inside `clipster/token.json`
 - Register the Bot with your server. Go to: `https://discordapp.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot&permissions=104233024`, but make sure to replace CLIENT_ID with your bot's client id.
