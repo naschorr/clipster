@@ -7,7 +7,7 @@ import utilities
 CONFIG_OPTIONS = utilities.load_config()
 
 ## Logging
-logger = logging.getLogger(__name__)
+logger = utilities.initialize_logging(logging.getLogger(__name__))
 
 class StringSimilarity:
     ## https://stackoverflow.com/questions/17388213/find-the-similarity-metric-between-two-strings

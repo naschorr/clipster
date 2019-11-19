@@ -11,7 +11,7 @@ from discord.ext.commands import DefaultHelpCommand, Paginator
 CONFIG_OPTIONS = utilities.load_config()
 
 ## Logging
-logger = logging.getLogger(__name__)
+logger = utilities.initialize_logging(logging.getLogger(__name__))
 
 class ClipsterHelpCommand(commands.DefaultHelpCommand):
     @property

@@ -14,7 +14,7 @@ from string_similarity import StringSimilarity
 CONFIG_OPTIONS = utilities.load_config()
 
 ## Logging
-logger = logging.getLogger(__name__)
+logger = utilities.initialize_logging(logging.getLogger(__name__))
 
 class Clip:
     def __init__(self, name, path, **kwargs):
@@ -76,8 +76,8 @@ class Clips(commands.Cog):
     ## Properties
 
     @property
-    def speech_cog(self):
-        return self.clipster.get_speech_cog()
+    def audio_player_cog(self):
+        return self.clipster.get_audio_player_cog()
 
     ## Methods
 
@@ -235,12 +235,12 @@ class Clips(commands.Cog):
 
 
     def _create_clip_callback(self, path):
-        '''Build a dynamic callback to invoke the bot's play_clip method'''
+        '''Build a dynamic callback to invoke the bot's play_audio method'''
 
         async def _clip_callback(ctx):
             ## Pass a self arg to it now that the command.instance is set to self
-            speech_cog = self.speech_cog
-            play_clip = speech_cog.play_clip
+            audio_player_cog = self.audio_player_cog
+            play_audio = audio_player_cog.play_audio
 
             ## Attempt to get a target channel
             try:
@@ -248,7 +248,7 @@ class Clips(commands.Cog):
             except:
                 target = None
 
-            await play_clip(ctx, path, target_member=target)
+            await play_audio(ctx, path, target_member=target)
 
         return _clip_callback
 

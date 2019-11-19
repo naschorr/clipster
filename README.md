@@ -67,8 +67,8 @@ Admin commands allow for some users to have a little more control over the bot. 
 - **description** - String - The bot's description. This is seen in the help interface.
 - **channel_timeout_seconds** - Int - The time in seconds before the bot will leave its current voice channel due to inactivity.
 - **channel_timeout_clip_paths** - Array - Array of paths to clips that the bot can speak right before it leaves the channel after it times out from inactivity. One clip is chosen randomly from the array.
-- **skip_votes** - Int - The minimum number of votes needed by a channel to skip the currently playing speech.
-- **skip_percentage** - Int - The minimum percentage of other users who need to request a skip before the currently playing speech will be skipped.
+- **skip_votes** - Int - The minimum number of votes needed by a channel to skip the currently playing audio.
+- **skip_percentage** - Int - The minimum percentage of other users who need to request a skip before the currently playing audio will be skipped.
 
 #### Bot Configuration
 - **log_level** - String - The minimum error level to log. Potential values are `DEBUG`, `INFO`, `WARNING`, `ERROR`, and `CRITICAL`, in order of severity (ascending). For example, choosing the `WARNING` log level will log everything tagged as `WARNING`, `ERROR`, and `CRITICAL`.

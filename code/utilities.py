@@ -1,6 +1,9 @@
 import os
 import sys
 import json
+import logging
+import pathlib
+from logging.handlers import RotatingFileHandler
 
 ## Config
 CONFIG_OPTIONS = {}         # This'll be populated on import
@@ -30,6 +33,41 @@ def is_linux():
 
 def is_windows():
     return ("win" in PLATFORM)
+
+
+def initialize_logging(logger):
+    FORMAT = "%(asctime)s - %(module)s - %(funcName)s - %(levelname)s - %(message)s"
+    formatter = logging.Formatter(FORMAT)
+    logging.basicConfig(format=FORMAT)
+
+    log_level = str(CONFIG_OPTIONS.get("log_level", "DEBUG"))
+    if (log_level == "DEBUG"):
+        logger.setLevel(logging.DEBUG)
+    elif (log_level == "INFO"):
+        logger.setLevel(logging.INFO)
+    elif (log_level == "WARNING"):
+        logger.setLevel(logging.WARNING)
+    elif (log_level == "ERROR"):
+        logger.setLevel(logging.ERROR)
+    elif (log_level == "CRITICAL"):
+        logger.setLevel(logging.CRITICAL)
+    else:
+        logger.setLevel(logging.DEBUG)
+
+    ## Get the directory containing the logs and make sure it exists, creating it if it doesn't
+    log_dir = CONFIG_OPTIONS.get("log_dir", os.path.sep.join([get_root_path(), "logs"]))
+    pathlib.Path(log_dir).mkdir(parents=True, exist_ok=True)    # Basically a mkdir -p $log_dir
+
+    log_path = os.path.sep.join([log_dir, "clipster.log"])
+
+    ## Setup and add the rotating log handler to the logger
+    max_bytes = CONFIG_OPTIONS.get("log_max_bytes", 1024 * 1024 * 10)   # 10 MB
+    backup_count = CONFIG_OPTIONS.get("log_backup_count", 10)
+    rotating_log_handler = RotatingFileHandler(log_path, maxBytes=max_bytes, backupCount=backup_count)
+    rotating_log_handler.setFormatter(formatter)
+    logger.addHandler(rotating_log_handler)
+
+    return logger
 
 
 CONFIG_OPTIONS = load_config()

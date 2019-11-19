@@ -25,8 +25,8 @@ class Admin(commands.Cog):
     ## Properties
 
     @property
-    def speech_cog(self):
-        return self.hawking.get_speech_cog()
+    def audio_player_cog(self):
+        return self.hawking.get_audio_player_cog()
 
     @property
     def clips_cog(self):
@@ -102,25 +102,25 @@ class Admin(commands.Cog):
         return (count >= 0)
 
 
-    ## Skips the currently playing speech (admin only)
-    ## Todo: merge with Speech.skip
+    ## Skips the currently playing audio (admin only)
+    ## Todo: merge with AudioPlayer.skip
     @admin.command(no_pm=True)
     async def skip(self, ctx):
-        """Skips the current speech."""
+        """Skips the current audio."""
 
         if(not self.is_admin(ctx.message.author)):
             await ctx.send("<@{}> isn't allowed to do that.".format(ctx.message.author.id))
             self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False))
             return False
 
-        state = self.speech_cog.get_server_state(ctx)
+        state = self.audio_player_cog.get_server_state(ctx)
         if(not state.is_playing()):
             await ctx.send("I'm not speaking at the moment.")
             self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False))
             return False
 
-        await ctx.send("Admin <@{}> has skipped the speech.".format(ctx.message.author.id))
-        await state.skip_speech()
+        await ctx.send("Admin <@{}> has skipped the audio.".format(ctx.message.author.id))
+        await state.skip_audio()
         self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, True))
         return True
 
@@ -135,7 +135,7 @@ class Admin(commands.Cog):
             self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False))
             return False
 
-        state = self.speech_cog.get_server_state(ctx)
+        state = self.audio_player_cog.get_server_state(ctx)
         await state.ctx.voice_client.disconnect()
 
         self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, True))
