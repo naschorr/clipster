@@ -6,7 +6,7 @@ Type=simple
 ExecStart=/usr/local/bin/clipster/bin/python /usr/local/bin/clipster/code/clipster.py
 WorkingDirectory=/usr/local/bin/clipster/code
 Restart=always
-RestartSec=5
+RestartSec=60
 
 [Install]
 WantedBy=sysinit.target

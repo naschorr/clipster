@@ -18,15 +18,6 @@ import dynamo_helper
 import help_command
 from string_similarity import StringSimilarity
 
-
-if not discord.opus.is_loaded():
-    # the 'opus' library here is opus.dll on windows
-    # or libopus.so on linux in the current directory
-    # you should replace this with the location the
-    # opus library is located in and with the proper filename.
-    # note that on windows this DLL is automatically provided for you
-    discord.opus.load_opus('opus')
-
 ## Config
 CONFIG_OPTIONS = utilities.load_config()
 
@@ -294,19 +285,17 @@ class Clipster:
     def run(self):
         '''Starts the bot up'''
 
-        ## Keep bot going despite any misc service errors. If the bot is running as a service, it'll start back up
-        ## automatically
-        try:
-            self.bot.run(utilities.load_json(os.path.sep.join([utilities.get_root_path(), self.token_file_path]))["token"])
-        except RuntimeError as e:
-            logger.critical("Critical runtime error when running the bot", exc_info=True)
-        except Exception as e:
-            logger.critical("Critical exception when running the bot", exc_info=True)
+        ## So ideally there would be some flavor of atexit.register or signal.signal command to gracefully shut the bot
+        ## down upon SIGTERM or SIGINT. However that doesn't seem to be possible at the moment. Discord.py's got most of
+        ## the functionality built into the base close() method that fires on SIGINT and SIGTERM, but the bot never ends
+        ## up getting properly disconnected from the voice channels that it's connected to. I end up having to wait for
+        ## a time out. Otherwise the bot will be in a weird state upon starting back up, and attempting to speak in one
+        ## of the channels that it was previously in. Fortunately this bad state will self-recover in a minute or so,
+        ## but it's still unpleasant. A temporary fix is to bump up the RestartSec= property in the service config to be
+        ## long enough to allow for the bot to be forcefully disconnected
 
-
-    def stop(self):
-        '''Stops the bot gracefully'''
-        self.bot.logout()
+        logger.info('Starting up the bot.')
+        self.bot.run(utilities.load_json(os.path.sep.join([utilities.get_root_path(), self.token_file_path]))["token"])
 
 
 if (__name__ == "__main__"):

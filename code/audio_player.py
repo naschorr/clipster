@@ -2,6 +2,7 @@ import os
 os.environ = {} # Remove env variables to give os.system a semblance of security
 import sys
 import asyncio
+import async_timeout
 import time
 import inspect
 import logging
@@ -42,6 +43,7 @@ class AudioPlayRequest:
         self.audio = audio
         self.file_path = file_path
         self.callback = callback
+        self.skipped = False
 
 
     def __str__(self):
@@ -59,11 +61,10 @@ class ServerStateManager:
         self.bot = bot
         self.audio_player_cog = audio_player_cog
         self.active_play_request: AudioPlayRequest = None
-        self.next = asyncio.Event()
-        self.skip_votes = set() # set of users that voted to skip
-        self.audio_play_queue = asyncio.Queue()
+        self.next = asyncio.Event() # flag for alerting the audio_player to play the next AudioPlayRequest
+        self.skip_votes = set() # set of Members that voted to skip
+        self.audio_play_queue = asyncio.Queue() # queue of AudioPlayRequest to play
         self.audio_player = self.bot.loop.create_task(self.audio_player_loop())
-        self.last_audio_play_time = int(time.time())
 
         ## Lazy config
         self.channel_timeout_seconds = int(CONFIG_OPTIONS.get('channel_timeout_seconds', 15 * 60))
@@ -92,7 +93,7 @@ class ServerStateManager:
     def is_playing(self) -> bool:
         '''Returns a bool to determine if the bot is speaking in this state.'''
 
-        if(self.ctx.voice_client is None or self.active_play_request is None):
+        if(self.ctx.voice_client is None):
             return False
 
         return self.ctx.voice_client.is_playing()
@@ -107,21 +108,29 @@ class ServerStateManager:
     async def get_voice_client(self, channel: discord.VoiceChannel):
         '''Handles voice client management by connecting, and moving between voice channels'''
 
-        ## NOTE: There's an issue where if you reset the app, while the bot is connected to a voice channel, upon the 
-        ## bot reconnecting and joining the same voice channel, playing audio won't work.
-        ## See: https://github.com/Rapptz/discord.py/issues/2284
-
         if (self.ctx.voice_client is not None):
             ## Check to see if the bot is already in the correct channel
             if (self.ctx.voice_client.channel.id == channel.id):
                 return self.ctx.voice_client
             else:
                 return await self.ctx.voice_client.move_to(channel)
+        else:
+            ## NOTE: There's an issue where if you reset the app, while the bot is connected to a voice channel, upon the 
+            ## bot reconnecting and joining the same voice channel, playing audio won't work.
+            ## See: https://github.com/Rapptz/discord.py/issues/2284
+            already_in_channel = next(filter(lambda member: member.id == self.bot.user.id, channel.members), None)
+            if (already_in_channel):
+                logger.warn("Bot is already in requested channel, but no voice client exists.")
+                await self.ctx.send(
+                    "Uh oh <@{}>, looks like I'm still in the channel! Wait until I disconnect before trying again."
+                    .format(self.ctx.message.author.id)
+                )
+                return
 
         return await channel.connect()
 
 
-    async def skip_audio(self):
+    def skip_audio(self):
         '''Skips the currently playing audio. If more audio is queued up, it will be played immediately.'''
 
         if(self.is_playing()):
@@ -132,35 +141,34 @@ class ServerStateManager:
             ))
 
             self.ctx.voice_client.stop()
-            self.bot.loop.call_soon_threadsafe(self.next.set)
 
+        self.active_play_request.skipped = True
+        self.next.set()
         self.skip_votes.clear()
 
 
-    async def disconnect_if_inactive(self):
-        '''Tries to disonnect the bot from this state's voice channel if it hasn't been used in a while'''
+    async def disconnect(self, inactive=False):
+        ## No voice client to disconnect!
+        if (not self.ctx.voice_client):
+            return
 
-        self.last_audio_play_time = int(time.time())
-
-        ## Sleep for the desired timeout duration. If no other play requests happen in this period, the bot will disconnect
-        await asyncio.sleep(self.channel_timeout_seconds)
-
-        if(self.ctx.voice_client is not None and self.last_audio_play_time + self.channel_timeout_seconds <= int(time.time())):
-            logger.debug("Attempting to leave channel: {}, in server: {}, due to inactivity for past {} seconds".format(
+        logger.debug("Attempting to leave channel: {}, in server: {}, due to inactivity for past {} seconds".format(
                 self.ctx.voice_client.channel.name,
                 self.ctx.guild.name,
                 self.channel_timeout_seconds
             ))   
 
-            if (len(self.channel_timeout_clip_paths) > 0):
-                ## Play a random sign off clip before disconnecting
-                await self.audio_player_cog._play_audio_via_server_state(
-                    self,
-                    os.path.sep.join([utilities.get_root_path(), choice(self.channel_timeout_clip_paths)]),
-                    self.ctx.voice_client.disconnect
-                )
-            else:
-                await self.ctx.voice_client.disconnect()
+        if (inactive and len(self.channel_timeout_clip_paths) > 0):
+            ## Play a random sign off clip before disconnecting
+            await self.audio_player_cog._play_audio_via_server_state(
+                self,
+                os.path.sep.join([utilities.get_root_path(), choice(self.channel_timeout_clip_paths)]),
+                self.ctx.voice_client.disconnect
+            )
+            return
+
+        ## Default to a regular voice client disconnect
+        await self.ctx.voice_client.disconnect()
 
 
     async def audio_player_loop(self):
@@ -170,38 +178,43 @@ class ServerStateManager:
         audio, and handling successful skip requests
         '''
 
-        ## Overly commented because I'm dumb and this helps me explain it to myself
         while(True):
             try:
-                ## Sometimes the loop will go into a bad state during skipping where the voice client has had the
-                ## synchronous 'stop' method called, but it hasn't actually stopped yet. This just gives it some time to
-                ## stop safely.
-                ## todo: Fix the skip logic? It seems more like a discord.py issue
-                if (self.is_playing()):
-                    await asyncio.sleep(0.5)
+                self.next.clear()
+                active_play_request = None
+
+                try:
+                    async with async_timeout.timeout(self.channel_timeout_seconds):
+                        self.active_play_request = await self.audio_play_queue.get()
+                        active_play_request = self.active_play_request
+                except asyncio.TimeoutError:
+                    if (self.ctx.voice_client and self.ctx.voice_client.is_connected()):
+                        self.bot.loop.create_task(self.disconnect(inactive=True))
                     continue
 
-                ## Make sure the semaphor hasn't been set
-                self.next.clear()
-
-                ## Pop the oldest audio play request off the queue (or wait until the queue is populated if empty)
-                self.active_play_request = await self.audio_play_queue.get()
-
-                ## Join the requester's voice channel
+                ## Join the requester's voice channel & play their clip
                 voice_client = await self.get_voice_client(self.active_play_request.channel)
 
-                ## Start playing & wait for the voice client to finish playing
-                voice_client.play(self.active_play_request.audio, after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set))
-                
-                play_request = self.active_play_request
-                logger.debug("Playing audio at: {}, for user: {} ({}), in channel: {}, in server: {}".format(
-                    play_request.file_path,
-                    play_request.member.name,
-                    play_request.member.id,
-                    play_request.channel.name,
-                    self.ctx.guild.name
-                ))
+                if (voice_client.is_playing()):
+                    voice_client.stop()
 
+                def after_play_callback_builder():
+                    ## Wrap this in a closure to keep it available even when it should be out of scope
+                    current_active_play_request = active_play_request
+                    
+                    def after_play(_):
+                        if (id(self.active_play_request) == id(current_active_play_request)):
+                            self.next.set()
+
+                    return after_play
+
+                logger.debug('Playing file at: {}, in channel: {}, in server: {}, for user: {}'.format(
+                    self.active_play_request.file_path,
+                    self.active_play_request.channel.name,
+                    self.active_play_request.channel.guild.name,
+                    self.active_play_request.member.name if self.active_play_request.member else None
+                ))
+                voice_client.play(self.active_play_request.audio, after=after_play_callback_builder())
                 await self.next.wait()
 
                 ## Perform callback after the audio has finished (assuming it's defined)
@@ -211,12 +224,9 @@ class ServerStateManager:
                         await callback()
                     else:
                         callback()
-
-                ## Clear the active audio_play_request, so it doesn't persist as 'active' after the audio_play_queue has
-                ## emptied
-                self.active_play_request = None
+            
             except Exception as e:
-                logger.exception("Exception inside audio player event loop", exc_info=e)
+                logger.exception('Exception inside audio player event loop', exc_info=e)
 
 
 class AudioPlayer(commands.Cog):
@@ -290,7 +300,7 @@ class AudioPlayer(commands.Cog):
         ## Todo: Add extra skip logic when sending preset phrases to someone else?
         if(voter == state.active_play_request.member):
             await ctx.send("<@{}> skipped their own audio.".format(voter.id))
-            await state.skip_audio()
+            state.skip_audio()
             return False
         elif(voter.id not in state.skip_votes):
             state.skip_votes.add(voter.id)
@@ -302,7 +312,7 @@ class AudioPlayer(commands.Cog):
 
             if(total_votes >= self.skip_votes or vote_percentage >= self.skip_percentage):
                 await ctx.send("Skip vote passed, skipping current audio.")
-                await state.skip_audio()
+                state.skip_audio()
                 return True
             else:
                 raw = "Skip vote added, currently at {}/{} or {}%/{}%"
@@ -339,10 +349,6 @@ class AudioPlayer(commands.Cog):
 
         self.dynamo_db.put(dynamo_helper.DynamoItem(
             ctx, ctx.message.content, inspect.currentframe().f_code.co_name, True))
-
-        ## Attempt to disconnect if the bot is inactive for too long after the command finishes
-        ## todo: Move disconnect logic into audio queue event loop (or rather make separate timeout event loop?)
-        await state.disconnect_if_inactive()
 
         return True
 
