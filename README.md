@@ -7,7 +7,7 @@ Soundboard bot for Discord
 - Go to [this page](https://discordapp.com/oauth2/authorize?client_id=475695802350829568&scope=bot&permissions=104233024) on Discord's site.
 - Select the server that you want Clipster to be added to.
 - Hit the "Authorize" button.
-- Start playing clips! (_Hint:_ join a voice channel and type in `=help`. You should check out the [**Commands**](https://github.com/naschorr/clipster#commands) section below, too!)
+- Start playing clips! (_Hint:_ join a voice channel and type in `=help`. You should check out the [**Commands**](https://github.com/naschorr/clipster#basic-commands) section below, too!)
 
 ## Basic Commands
 These commands allow for the basic operation of the bot, by anyone. Just type them into a public text channel while connected to a public voice channel. (Clipster can also read/join channels that you've given the permissions to)
@@ -15,18 +15,17 @@ These commands allow for the basic operation of the bot, by anyone. Just type th
 - `=find [text]` - The bot will search its preloaded clips for the one whose contents most closely matches [text], and will display that command's name.
 - `=random` - Plays a random clip from the list of preloaded clips.
 - `=skip` - Skip a clip that you've requested, or start a vote to skip on someone else's clip.
-- `=summon` - Summons the bot to join your voice channel.
 - `=help` - Show the help screen.
 
 ## Hosting it yourself
-- Make sure you've got [Python 3.6](https://www.python.org/downloads/) installed, and support for virtual environments (This assumes that you're on Python 3.6 with `venv` support, but older versions with `virtualenv` and `pyvenv` should also work.)
+- Make sure you've got [Python 3.6](https://www.python.org/downloads/) installed, and support for virtual environments (This assumes that you're on Python 3.6 with `venv` support, but you can also use the old `virtualenv` commands via the `python-virtualenv` package)
 - `cd` into the directory that you'd like the project to go (If you're on Linux, I'd recommend '/usr/local/bin')
 - `git clone https://github.com/naschorr/clipster`
 - `python3 -m venv clipster/`
     + You may need to run: `apt install python3-venv` to enable virtual environments for Python 3 on Linux
 - Activate your newly created venv
 - `pip install -r requirements.txt`
-    + If you run into issues during PyNaCl's installation, you may need to run: `apt install build-essential libffi-dev python3.5-dev` to install some supplemental features for the setup process.
+    + If you run into issues during PyNaCl's installation, you may need to run: `apt install build-essential libffi-dev python3.6-dev` to install some supplemental features for the setup process.
 - Make sure the [FFmpeg executable](https://www.ffmpeg.org/download.html) is in your system's `PATH` variable
 - Create a [Discord app](https://discordapp.com/developers/applications/me), flag it as a bot, and put the bot token inside `clipster/token.json`
 - Register the Bot with your server. Go to: `https://discordapp.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot&permissions=104233024`, but make sure to replace CLIENT_ID with your bot's client id.
@@ -66,13 +65,16 @@ Admin commands allow for some users to have a little more control over the bot. 
 - **admins** - Array - Array of Discord usernames who have access to `\admin` commands. Uses `Username#1234` format.
 - **activation_string** - String - The string that'll activate the Discord bot from chat messages.
 - **description** - String - The bot's description. This is seen in the help interface.
-- **channel_timeout** - Int - The time in seconds before the bot will leave its current voice channel due to inactivity.
+- **channel_timeout_seconds** - Int - The time in seconds before the bot will leave its current voice channel due to inactivity.
 - **channel_timeout_clip_paths** - Array - Array of paths to clips that the bot can speak right before it leaves the channel after it times out from inactivity. One clip is chosen randomly from the array.
-- **skip_votes** - Int - The minimum number of votes needed by a channel to skip the currently playing speech.
-- **skip_percentage** - Int - The minimum percentage of other users who need to request a skip before the currently playing speech will be skipped.
+- **skip_votes** - Int - The minimum number of votes needed by a channel to skip the currently playing audio.
+- **skip_percentage** - Int - The minimum percentage of other users who need to request a skip before the currently playing audio will be skipped.
 
 #### Bot Configuration
 - **log_level** - String - The minimum error level to log. Potential values are `DEBUG`, `INFO`, `WARNING`, `ERROR`, and `CRITICAL`, in order of severity (ascending). For example, choosing the `WARNING` log level will log everything tagged as `WARNING`, `ERROR`, and `CRITICAL`.
+- **log_dir** - String - The path (relative to the root) where logs should be stored.
+- **log_max_bytes** - Int - The maximum size (in bytes) of a single log, before it should be rotated out. Defaults to 10MB.
+- **log_backup_count** - Int - The maximum number of logs to keep before deleting the oldest ones.
 - **token_file_path** - String - Force the bot to use a specific token, rather than the normal `token.json` file.
 - **clips_folder_path** - String - Force the bot to use a specific clips folder, rather than the normal `clips/` folder.
 - **ffmpeg_parameters** - String - Options to send to the FFmpeg executable before the `-i` flag.

@@ -3,9 +3,7 @@ import inspect
 import sys
 import os
 import time
-import pathlib
 import logging
-from logging.handlers import RotatingFileHandler
 from collections import OrderedDict
 
 import discord
@@ -13,27 +11,18 @@ from discord.ext import commands
 from discord.ext.commands.view import StringView
 
 import utilities
-import speech
+import audio_player
 import admin
 import clips
 import dynamo_helper
-import help_formatter
+import help_command
 from string_similarity import StringSimilarity
-
-
-if not discord.opus.is_loaded():
-    # the 'opus' library here is opus.dll on windows
-    # or libopus.so on linux in the current directory
-    # you should replace this with the location the
-    # opus library is located in and with the proper filename.
-    # note that on windows this DLL is automatically provided for you
-    discord.opus.load_opus('opus')
 
 ## Config
 CONFIG_OPTIONS = utilities.load_config()
 
 ## Logging
-logger = logging.getLogger(__name__)
+logger = utilities.initialize_logging(logging.getLogger(__name__))
 
 class ModuleEntry:
     def __init__(self, cls, is_cog, *init_args, **init_kwargs):
@@ -190,13 +179,15 @@ class Clipster:
         ## Init the bot and module manager
         self.bot = commands.Bot(
             command_prefix=commands.when_mentioned_or(self.activation_string),
-            formatter=help_formatter.ClipsterHelpFormatter(),
             description=self.description
         )
         self.module_manager = ModuleManager(self, self.bot)
 
+        ## Apply customized HelpCommand
+        self.bot.help_command = help_command.ClipsterHelpCommand()
+
         ## Register the modules (Order of registration is important, make sure dependancies are loaded first)
-        self.module_manager.register(speech.Speech, True, self.bot)
+        self.module_manager.register(audio_player.AudioPlayer, True, self.bot)
         self.module_manager.register(admin.Admin, True, self, self.bot)
         self.module_manager.register(clips.Clips, True, self, self.bot, self.clips_folder_path)
 
@@ -206,24 +197,18 @@ class Clipster:
         ## Give some feedback for when the bot is ready to go, and provide some help text via the 'playing' status
         @self.bot.event
         async def on_ready():
+            ## todo: Activity instead of Game? Potentially remove "Playing" text below bot
             bot_status = discord.Game(type=0, name="Use {}help".format(self.activation_string))
-            await self.bot.change_presence(game=bot_status)
+            await self.bot.change_presence(activity=bot_status)
 
             logger.info("Logged in as '{}' (version: {}), (id: {})".format(self.bot.user.name, self.version, self.bot.user.id))
 
-        ## Give some feedback to users when their command doesn't execute.
+
         @self.bot.event
-        async def on_command_error(exception, ctx):
-            # discord.py uses reflection to set the destination chat channel for whatever reason (sans command ctx)
-            _internal_channel = ctx.message.channel
-
-            ## Handy for debugging
-            # import traceback
-            # print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-            # traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stderr)
-
-            logger.exception("on_command_error")
-
+        async def on_command_error(ctx, exception):
+            '''Handles command errors. Attempts to find a similar command and suggests it, otherwise directs the user to the help prompt.'''
+            
+            logger.exception("Unable to process command.", exc_info=exception)
             self.dynamo_db.put(dynamo_helper.DynamoItem(
                 ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False, str(exception)))
 
@@ -232,7 +217,7 @@ class Clipster:
 
             if (most_similar_command[0] == ctx.invoked_with):
                 ## Handle issues where the command is valid, but couldn't be completed for whatever reason.
-                await self.bot.say("I'm sorry <@{}>, I'm afraid I can't do that.\n" \
+                await ctx.send("I'm sorry <@{}>, I'm afraid I can't do that.\n" \
                     "Discord is having some issues that won't let me speak right now."
                     .format(ctx.message.author.id))
             else:
@@ -246,7 +231,7 @@ class Clipster:
                     help_text_chunks.append("Try the **{}help** page.".format(self.activation_string))
 
                 ## Dump output to user
-                await self.bot.say(" ".join(help_text_chunks))
+                await ctx.send(" ".join(help_text_chunks))
                 return
 
     ## Methods
@@ -261,9 +246,9 @@ class Clipster:
         return self.bot.get_cog(cls_name)
 
 
-    ## Returns the bot's speech cog
-    def get_speech_cog(self):
-        return self.bot.get_cog("Speech")
+    ## Returns the bot's audio player cog
+    def get_audio_player_cog(self):
+        return self.bot.get_cog("AudioPlayer")
 
 
     ## Returns the bot's clips cog
@@ -285,7 +270,7 @@ class Clipster:
             message = command
 
         ## Get a list of all visible commands 
-        commands = [name for name, cmd in self.bot.commands.items() if not cmd.hidden]
+        commands = [cmd.name for cmd in self.bot.commands if not cmd.hidden]
 
         ## Find the most similar command
         most_similar_command = (None, 0)
@@ -296,59 +281,27 @@ class Clipster:
 
         return most_similar_command
 
-    ## Run the bot
+
     def run(self):
-        ## Keep bot going despite any misc service errors
-        try:
-            self.bot.run(utilities.load_json(os.path.sep.join([utilities.get_root_path(), self.token_file_path]))["token"])
-        except RuntimeError as e:
-            logger.critical("Critical runtime error when running the bot", exc_info=True)
-        except Exception as e:
-            logger.critical("Critical exception when running the bot", exc_info=True)
-            time.sleep(1)
-            self.run()
+        '''Starts the bot up'''
 
+        ## So ideally there would be some flavor of atexit.register or signal.signal command to gracefully shut the bot
+        ## down upon SIGTERM or SIGINT. However that doesn't seem to be possible at the moment. Discord.py's got most of
+        ## the functionality built into the base close() method that fires on SIGINT and SIGTERM, but the bot never ends
+        ## up getting properly disconnected from the voice channels that it's connected to. I end up having to wait for
+        ## a time out. Otherwise the bot will be in a weird state upon starting back up, and attempting to speak in one
+        ## of the channels that it was previously in. Fortunately this bad state will self-recover in a minute or so,
+        ## but it's still unpleasant. A temporary fix is to bump up the RestartSec= property in the service config to be
+        ## long enough to allow for the bot to be forcefully disconnected
 
-def initialize_logging():
-    FORMAT = "%(asctime)s - %(module)s - %(funcName)s - %(levelname)s - %(message)s"
-    formatter = logging.Formatter(FORMAT)
-    logging.basicConfig(format=FORMAT)
-
-    log_level = str(CONFIG_OPTIONS.get("log_level", "DEBUG"))
-    if (log_level == "DEBUG"):
-        logger.setLevel(logging.DEBUG)
-    elif (log_level == "INFO"):
-        logger.setLevel(logging.INFO)
-    elif (log_level == "WARNING"):
-        logger.setLevel(logging.WARNING)
-    elif (log_level == "ERROR"):
-        logger.setLevel(logging.ERROR)
-    elif (log_level == "CRITICAL"):
-        logger.setLevel(logging.CRITICAL)
-    else:
-        logger.setLevel(logging.DEBUG)
-
-    logger.info("Set log level to {}".format(logger.level))
-
-    ## Get the directory containing the logs and make sure it exists, creating it if it doesn't
-    log_dir = CONFIG_OPTIONS.get("log_dir", os.path.sep.join([utilities.get_root_path(), "logs"]))
-    pathlib.Path(log_dir).mkdir(parents=True, exist_ok=True)    # Basically a mkdir -p $log_dir
-
-    log_path = os.path.sep.join([log_dir, "clipster.log"])
-
-    ## Setup and add the rotating log handler to the logger
-    max_bytes = CONFIG_OPTIONS.get("log_max_bytes", 1024 * 1024 * 10)   # 10 MB
-    backup_count = CONFIG_OPTIONS.get("log_backup_count", 10)
-    rotating_log_handler = RotatingFileHandler(log_path, maxBytes=max_bytes, backupCount=backup_count)
-    rotating_log_handler.setFormatter(formatter)
-    logger.addHandler(rotating_log_handler)
+        logger.info('Starting up the bot.')
+        self.bot.run(utilities.load_json(os.path.sep.join([utilities.get_root_path(), self.token_file_path]))["token"])
 
 
 if (__name__ == "__main__"):
-    initialize_logging()
-
     clipster = Clipster()
     # clipster.register_module(ArbitraryClass(*init_args, **init_kwargs))
     # or,
     # clipster.add_cog(ArbitaryClass(*args, **kwargs))
+
     clipster.run()
