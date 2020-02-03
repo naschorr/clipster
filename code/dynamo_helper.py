@@ -9,7 +9,7 @@ import utilities
 CONFIG_OPTIONS = utilities.load_config()
 
 ## Logging
-logger = logging.getLogger(__name__)
+logger = utilities.initialize_logging(logging.getLogger(__name__))
 
 class DynamoItem:
     def __init__(self, discord_context, query, command, is_valid, error=None):
