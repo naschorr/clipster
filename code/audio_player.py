@@ -329,7 +329,9 @@ class AudioPlayer(commands.Cog):
         if (not target_member or not isinstance(target_member, Member)):
             target_member = ctx.message.author
 
-        voice_channel = target_member.voice.channel
+        voice_channel = None
+        if (target_member.voice):   ## Handle users not in a voice channel
+            voice_channel = target_member.voice.channel
         if(voice_channel is None):
             await ctx.send("<@{}> isn't in a voice channel.".format(target_member.id))
             self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False))
