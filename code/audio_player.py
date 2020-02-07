@@ -206,6 +206,14 @@ class ServerStateManager:
                         if (id(self.active_play_request) == id(current_active_play_request)):
                             self.next.set()
 
+                            ## Perform callback after the audio has finished (assuming it's defined)
+                            callback = current_active_play_request.callback
+                            if(callback):
+                                if(asyncio.iscoroutinefunction(callback)):
+                                    self.bot.loop.create_task(callback())
+                                else:
+                                    callback()
+
                     return after_play
 
                 logger.debug('Playing file at: {}, in channel: {}, in server: {}, for user: {}'.format(
@@ -216,14 +224,6 @@ class ServerStateManager:
                 ))
                 voice_client.play(self.active_play_request.audio, after=after_play_callback_builder())
                 await self.next.wait()
-
-                ## Perform callback after the audio has finished (assuming it's defined)
-                callback = self.active_play_request.callback
-                if(callback):
-                    if(asyncio.iscoroutinefunction(callback)):
-                        await callback()
-                    else:
-                        callback()
             
             except Exception as e:
                 logger.exception('Exception inside audio player event loop', exc_info=e)
