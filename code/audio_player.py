@@ -191,6 +191,9 @@ class ServerStateManager:
                     if (self.ctx.voice_client and self.ctx.voice_client.is_connected()):
                         self.bot.loop.create_task(self.disconnect(inactive=True))
                     continue
+                except asyncio.CancelledError as e:
+                    logger.exception("CancelledError during audio_player_loop, ignoring and continuing loop.", excinfo=e)
+                    continue
 
                 ## Join the requester's voice channel & play their clip
                 voice_client = await self.get_voice_client(self.active_play_request.channel)
