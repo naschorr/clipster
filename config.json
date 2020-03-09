@@ -9,7 +9,7 @@
     "skip_percentage"                       : 33,
 
     "log_level"                             : "DEBUG",
-    "log_dir"                               : "logs",
+    "log_path"                              : "",
     "log_max_bytes"                         : 10485760,
     "log_backup_count"                      : 10,
     "token_file_path"                       : "token.json",
