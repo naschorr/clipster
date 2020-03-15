@@ -6,8 +6,8 @@ import async_timeout
 import time
 import inspect
 import logging
-from math import ceil
-from random import choice
+import random
+import math
 from typing import Callable
 from concurrent import futures
 
@@ -85,11 +85,15 @@ class ServerStateManager:
 
     ## Methods
 
-    async def get_members(self) -> set:
+    async def get_members(self, include_bots = False) -> list:
         '''Returns a set of members in the current voice channel'''
 
-        ## todo: does this include bots?
-        return self.active_play_request.channel.members
+        members = self.active_play_request.channel.members
+
+        if (include_bots):
+            return members
+        else:
+            return [member for member in members if member.bot == False]
 
 
     def is_playing(self) -> bool:
@@ -144,10 +148,11 @@ class ServerStateManager:
         '''Skips the currently playing audio. If more audio is queued up, it will be played immediately.'''
 
         if(self.is_playing()):
-            logger.debug("Skipping file at: {}, in channel: {}, in server: {}".format(
+            logger.debug("Skipping file at: {}, in channel: {}, in server: {}, for user: {}".format(
                 self.active_play_request.file_path,
                 self.ctx.voice_client.channel.name,
-                self.ctx.guild.name
+                self.ctx.guild.name,
+                self.active_play_request.member.name if self.active_play_request.member else None
             ))
 
             self.ctx.voice_client.stop()
@@ -172,7 +177,7 @@ class ServerStateManager:
             ## Play a random sign off clip before disconnecting
             await self.audio_player_cog._play_audio_via_server_state(
                 self,
-                os.path.sep.join([utilities.get_root_path(), choice(self.channel_timeout_clip_paths)]),
+                os.path.sep.join([utilities.get_root_path(), random.choice(self.channel_timeout_clip_paths)]),
                 self.ctx.voice_client.disconnect
             )
             return
@@ -247,6 +252,8 @@ class ServerStateManager:
                     current_active_play_request = active_play_request
                     
                     def after_play(_):
+                        self.skip_votes.clear()
+
                         if (id(self.active_play_request) == id(current_active_play_request)):
                             self.next.set()
 
@@ -276,7 +283,6 @@ class ServerStateManager:
 class AudioPlayer(commands.Cog):
     ## Keys
     CLIPS_FOLDER_PATH = "clips_folder_path"
-    SKIP_VOTES_KEY = "skip_votes"
     SKIP_PERCENTAGE_KEY = "skip_percentage"
     FFMPEG_PARAMETERS_KEY = "ffmpeg_parameters"
     FFMPEG_POST_PARAMETERS_KEY = "ffmpeg_post_parameters"
@@ -288,8 +294,7 @@ class AudioPlayer(commands.Cog):
         self.bot = bot
         self.server_states = {}
         self.clips_folder_path = CONFIG_OPTIONS.get(self.CLIPS_FOLDER_PATH, "clips")
-        self.skip_votes = int(CONFIG_OPTIONS.get(self.SKIP_VOTES_KEY, 3))
-        self.skip_percentage = int(CONFIG_OPTIONS.get(self.SKIP_PERCENTAGE_KEY, 33))
+        self.skip_percentage = max(min(float(CONFIG_OPTIONS.get(self.SKIP_PERCENTAGE_KEY, 0.5)), 1.0), 0.0)  ## Clamp between 0.0 and 1.0
         self.ffmpeg_parameters = CONFIG_OPTIONS.get(self.FFMPEG_PARAMETERS_KEY, "")
         self.ffmpeg_post_parameters = CONFIG_OPTIONS.get(self.FFMPEG_POST_PARAMETERS_KEY, "")
         self.dynamo_db = dynamo_helper.DynamoHelper()
@@ -309,13 +314,6 @@ class AudioPlayer(commands.Cog):
         return server_state
 
 
-    def is_matching_command(self, string, command) -> bool:
-        '''Checks if a given command fits into the back of a string (ex. '\say' matches 'say')'''
-
-        to_check = string[len(command):]
-        return (command == to_check)
-
-
     def build_player(self, file_path) -> discord.FFmpegPCMAudio:
         '''Builds an audio player for playing the file located at 'file_path'.'''
 
@@ -328,39 +326,51 @@ class AudioPlayer(commands.Cog):
     ## Commands
 
     @commands.command(no_pm=True)
-    async def skip(self, ctx, **kwargs):
+    async def skip(self, ctx, force = False):
         """Vote to skip the current audio."""
 
         state = self.get_server_state(ctx)
 
+        ## Is the bot speaking?
         if(not state.is_playing()):
             await ctx.send("I'm not speaking at the moment.")
-            self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False))
             return False
-        else:
-            self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, True))
 
-        voter = ctx.message.author
-        ## Todo: Add extra skip logic when sending preset phrases to someone else?
-        if(voter == state.active_play_request.member):
-            await ctx.send("<@{}> skipped their own audio.".format(voter.id))
+        ## Handle forced skips (should pretty much always be from an admin/bot owner)
+        if (force):
             state.skip_audio()
+            await ctx.send("<@{}> has skipped the audio.".format(ctx.message.author.id))
+            return True
+
+        ## Add a skip vote and tally it up!
+        voter = ctx.message.author
+        if(voter == state.active_play_request.member):
+            state.skip_audio()
+            await ctx.send("<@{}> skipped their own audio.".format(voter.id))
             return False
+
         elif(voter.id not in state.skip_votes):
             state.skip_votes.add(voter.id)
 
-            ## Todo: filter total_votes by members actually in the channel
-            total_votes = len(state.skip_votes)
-            total_members = len(await state.get_members()) - 1  # todo: filter out all bots
-            vote_percentage = ceil((total_votes / total_members) * 100)
+            ## Ensure all voters are still in the current channel (no drive-by skipping)
+            active_members = await state.get_members()
+            active_voters = [voter for voter in state.skip_votes if any(voter == member.id for member in active_members)]
+            total_votes = len(active_voters)
 
-            if(total_votes >= self.skip_votes or vote_percentage >= self.skip_percentage):
-                await ctx.send("Skip vote passed, skipping current audio.")
+            ## Determine if a skip should happen or not
+            vote_percentage = total_votes / len(active_members)
+            if(vote_percentage >= self.skip_percentage):
                 state.skip_audio()
+                await ctx.send("Skip vote passed! Skipping the current audio right now.")
                 return True
+
             else:
-                raw = "Skip vote added, currently at {}/{} or {}%/{}%"
-                await ctx.send(raw.format(total_votes, self.skip_votes, vote_percentage, self.skip_percentage))
+                ## The total votes needed for a successful skip
+                required_votes = math.ceil(len(active_members) * self.skip_percentage)
+
+                raw = "Skip vote added! Currently at {} of {} votes."
+                await ctx.send(raw.format(total_votes, required_votes))
+
         else:
             await ctx.send("<@{}> has already voted!".format(voter.id))
 
