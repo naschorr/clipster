@@ -20,11 +20,10 @@ from discord import errors
 from discord.ext import commands
 from discord.member import Member
 
-## Config
+## Config & logging
 CONFIG_OPTIONS = utilities.load_config()
-
-## Logging
 logger = utilities.initialize_logging(logging.getLogger(__name__))
+
 
 class AudioPlayRequest:
     '''
@@ -58,7 +57,7 @@ class ServerStateManager:
     This class helps to manage the bot, initiate audio play requests, and move between channels.
     '''
 
-    def __init__(self, ctx, bot: commands.Bot, audio_player_cog):
+    def __init__(self, ctx, bot: commands.Bot, audio_player_cog, channel_timeout_handler = None):
         self.ctx = ctx
         self.bot = bot
         self.audio_player_cog = audio_player_cog
@@ -68,9 +67,8 @@ class ServerStateManager:
         self.audio_play_queue = asyncio.Queue() # queue of AudioPlayRequest to play
         self.audio_player = self.bot.loop.create_task(self.audio_player_loop())
 
-        ## Lazy config
         self.channel_timeout_seconds = int(CONFIG_OPTIONS.get('channel_timeout_seconds', 15 * 60))
-        self.channel_timeout_clip_paths = CONFIG_OPTIONS.get('channel_timeout_clip_paths', [])
+        self.channel_timeout_handler = channel_timeout_handler
 
     ## Property(s)
 
@@ -173,13 +171,8 @@ class ServerStateManager:
                 self.channel_timeout_seconds
             ))   
 
-        if (inactive and len(self.channel_timeout_clip_paths) > 0):
-            ## Play a random sign off clip before disconnecting
-            await self.audio_player_cog._play_audio_via_server_state(
-                self,
-                os.path.sep.join([utilities.get_root_path(), random.choice(self.channel_timeout_clip_paths)]),
-                self.ctx.voice_client.disconnect
-            )
+        if (inactive and self.channel_timeout_handler):
+            await self.channel_timeout_handler(self, self.ctx.voice_client.disconnect)
             return
 
         ## Default to a regular voice client disconnect
@@ -210,7 +203,7 @@ class ServerStateManager:
                     logger.exception("CancelledError during audio_player_loop, ignoring and continuing loop.")
                     continue
 
-                ## Join the requester's voice channel & play their clip (Or Handle the appropriate exception)
+                ## Join the requester's voice channel & play their requested audio (Or Handle the appropriate exception)
                 voice_client = None
                 try:
                     voice_client = await self.get_voice_client(self.active_play_request.channel)
@@ -282,22 +275,21 @@ class ServerStateManager:
 
 class AudioPlayer(commands.Cog):
     ## Keys
-    CLIPS_FOLDER_PATH = "clips_folder_path"
     SKIP_PERCENTAGE_KEY = "skip_percentage"
     FFMPEG_PARAMETERS_KEY = "ffmpeg_parameters"
     FFMPEG_POST_PARAMETERS_KEY = "ffmpeg_post_parameters"
-    CHANNEL_TIMEOUT_KEY = "channel_timeout_seconds"
-    CHANNEL_TIMEOUT_CLIP_PATHS_KEY = "channel_timeout_clip_paths"
 
 
-    def __init__(self, bot: commands.Bot, **kwargs):
+    def __init__(self, bot: commands.Bot, channel_timeout_handler, **kwargs):
         self.bot = bot
         self.server_states = {}
-        self.clips_folder_path = CONFIG_OPTIONS.get(self.CLIPS_FOLDER_PATH, "clips")
-        self.skip_percentage = max(min(float(CONFIG_OPTIONS.get(self.SKIP_PERCENTAGE_KEY, 0.5)), 1.0), 0.0)  ## Clamp between 0.0 and 1.0
+        self.channel_timeout_handler = channel_timeout_handler
+        self.dynamo_db = dynamo_helper.DynamoHelper()
+
+        ## Clamp between 0.0 and 1.0
+        self.skip_percentage = max(min(float(CONFIG_OPTIONS.get(self.SKIP_PERCENTAGE_KEY, 0.5)), 1.0), 0.0)
         self.ffmpeg_parameters = CONFIG_OPTIONS.get(self.FFMPEG_PARAMETERS_KEY, "")
         self.ffmpeg_post_parameters = CONFIG_OPTIONS.get(self.FFMPEG_POST_PARAMETERS_KEY, "")
-        self.dynamo_db = dynamo_helper.DynamoHelper()
 
     ## Methods
 
@@ -308,7 +300,7 @@ class AudioPlayer(commands.Cog):
         server_state = self.server_states.get(server_id, None)
 
         if (server_state is None):
-            server_state = ServerStateManager(ctx, self.bot, self)
+            server_state = ServerStateManager(ctx, self.bot, self, self.channel_timeout_handler)
             self.server_states[server_id] = server_state
 
         return server_state
@@ -327,7 +319,7 @@ class AudioPlayer(commands.Cog):
 
     @commands.command(no_pm=True)
     async def skip(self, ctx, force = False):
-        """Vote to skip the current audio."""
+        '''Vote to skip the current audio.'''
 
         state = self.get_server_state(ctx)
 
@@ -375,9 +367,9 @@ class AudioPlayer(commands.Cog):
             await ctx.send("<@{}> has already voted!".format(voter.id))
 
 
-    ## Interface for playing the clip for the invoker's channel
-    async def play_audio(self, ctx, clip_path: str, target_member = None):
-        """Plays the given clip aloud to your channel"""
+    ## Interface for playing the audio file for the invoker's channel
+    async def play_audio(self, ctx, file_path: str, target_member = None):
+        '''Plays the given audio file aloud to your channel'''
 
         ## Verify that the target/requester is in a channel
         if (not target_member or not isinstance(target_member, Member)):
@@ -388,20 +380,18 @@ class AudioPlayer(commands.Cog):
             voice_channel = target_member.voice.channel
         if(voice_channel is None):
             await ctx.send("<@{}> isn't in a voice channel.".format(target_member.id))
-            self.dynamo_db.put(dynamo_helper.DynamoItem(ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False))
             return False
 
-        ## Make sure clip_path points to an actual file in the clips folder
-        if (not os.path.isfile(clip_path)):
-            await ctx.send("Sorry, <@{}>, your clip couldn't be played.".format(ctx.message.author.id))
-            self.dynamo_db.put(dynamo_helper.DynamoItem(
-                ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False))
+        ## Make sure file_path points to an actual file
+        if (not os.path.isfile(file_path)):
+            logger.error("Unable to play file at: {}, file doesn't exist or isn't a file.".format(file_path))
+            await ctx.send("Sorry, <@{}>, that couldn't be played.".format(ctx.message.author.id))
             return False
 
         ## Get/Build a state for this audio, build the player, and add it to the state
         state = self.get_server_state(ctx)
-        player = self.build_player(clip_path)
-        await state.add_play_request(AudioPlayRequest(ctx.message.author, voice_channel, player, clip_path))
+        player = self.build_player(file_path)
+        await state.add_play_request(AudioPlayRequest(ctx.message.author, voice_channel, player, file_path))
 
         self.dynamo_db.put(dynamo_helper.DynamoItem(
             ctx, ctx.message.content, inspect.currentframe().f_code.co_name, True))
@@ -409,19 +399,19 @@ class AudioPlayer(commands.Cog):
         return True
 
 
-    async def _play_audio_via_server_state(self, server_state: ServerStateManager, clip_path: str, callback = None):
-        '''Internal method for playing clips without a requester. Instead it'll play from the active voice_client.'''
+    async def _play_audio_via_server_state(self, server_state: ServerStateManager, file_path: str, callback = None):
+        '''Internal method for playing audio without a requester. Instead it'll play from the active voice_client.'''
 
-        ## Make sure clip_path points to an actual file in the clips folder
-        if (not os.path.isfile(clip_path)):
-            logger.error("Unable to find clip at: {}".format(clip_path))
+        ## Make sure file_path points to an actual file
+        if (not os.path.isfile(file_path)):
+            logger.error("Unable to play file at: {}, file doesn't exist or isn't a file.".format(file_path))
             return False
 
-        ## Create a player for the clip
-        player = self.build_player(clip_path)
+        ## Create a player for the audio file
+        player = self.build_player(file_path)
 
         ## On successful player creation, build a AudioPlayRequest and push it into the queue
-        play_request = AudioPlayRequest(None, server_state.ctx.voice_client.channel, player, clip_path, callback)
+        play_request = AudioPlayRequest(None, server_state.ctx.voice_client.channel, player, file_path, callback)
         await server_state.add_play_request(play_request)
 
         return True

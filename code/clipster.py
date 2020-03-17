@@ -56,9 +56,9 @@ class Clipster:
         self.bot.help_command = help_command.ClipsterHelpCommand()
 
         ## Register the modules (Order of registration is important, make sure dependancies are loaded first)
-        self.module_manager.register(audio_player.AudioPlayer, True, self.bot)
         self.module_manager.register(admin.Admin, True, self, self.bot)
         self.module_manager.register(clips.Clips, True, self, self.bot, self.clips_folder_path)
+        self.module_manager.register(audio_player.AudioPlayer, True, self.bot, self.get_clips_cog().play_random_channel_timeout_clip)
 
         ## Load any dynamic modules inside the /modules folder
         self.module_manager.discover()

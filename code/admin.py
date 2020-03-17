@@ -103,7 +103,6 @@ class Admin(commands.Cog):
 
 
     ## Skips the currently playing audio (admin only)
-    ## Todo: merge with AudioPlayer.skip
     @admin.command(no_pm=True)
     async def skip(self, ctx):
         """Skips the current audio."""
