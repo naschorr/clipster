@@ -42,7 +42,6 @@ class ClipGroup:
 
 class Clips(commands.Cog):
     ## Keys
-    CLIPS_FOLDER_PATH_KEY = "clips_folder_path"
     MANIFEST_FILE_NAME_KEY = "manifest.json"
     CLIPS_KEY = "clips"
     NAME_KEY = "name"
@@ -55,14 +54,15 @@ class Clips(commands.Cog):
     def __init__(self, clipster, bot, clips_folder_path, **command_kwargs):
         self.clipster = clipster
         self.bot = bot
+        self.dynamo_db = dynamo_helper.DynamoHelper()
+
         self.manifest_file_name = self.MANIFEST_FILE_NAME_KEY
         self.clips_folder_path = clips_folder_path
         self.command_kwargs = command_kwargs
         self.command_names = []
         self.command_group_names = []
         self.find_command_minimum_similarity = float(CONFIG_OPTIONS.get('find_command_minimum_similarity', 0.5))
-
-        self.dynamo_db = dynamo_helper.DynamoHelper()
+        self.channel_timeout_clip_paths = CONFIG_OPTIONS.get('channel_timeout_clip_paths', [])
 
         ## Make sure context is always passed to the callbacks
         self.command_kwargs["pass_context"] = True
@@ -251,6 +251,17 @@ class Clips(commands.Cog):
             await play_audio(ctx, path, target_member=target)
 
         return _clip_callback
+
+
+    async def play_random_channel_timeout_clip(self, server_state, callback):
+        '''Channel timeout logic, picks an appropriate sign-off message and plays it'''
+
+        if (len(self.channel_timeout_clip_paths) > 0):
+            await self.audio_player_cog._play_audio_via_server_state(
+                server_state,
+                os.path.sep.join([utilities.get_root_path(), random.choice(self.channel_timeout_clip_paths)]),
+                callback
+            )
 
 
     ## Says a random clip from the added clips
