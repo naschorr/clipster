@@ -27,7 +27,6 @@ class Clipster:
     VERSION_KEY = "version"
     ACTIVATION_STRING_KEY = "activation_string"
     DESCRIPTION_KEY = "description"
-    TOKEN_FILE_PATH_KEY = "token_file_path"
     CLIPS_FOLDER_PATH_KEY = "clips_folder_path"
 
 
@@ -36,14 +35,16 @@ class Clipster:
         self.version = CONFIG_OPTIONS.get(self.VERSION_KEY, 'No version information found')
         self.activation_string = CONFIG_OPTIONS.get(self.ACTIVATION_STRING_KEY)
         self.description = CONFIG_OPTIONS.get(self.DESCRIPTION_KEY, 'No bot description found')
-        self.token_file_path = CONFIG_OPTIONS.get(self.TOKEN_FILE_PATH_KEY)
         self.clips_folder_path = CONFIG_OPTIONS.get(self.CLIPS_FOLDER_PATH_KEY)
         self.invalid_command_minimum_similarity = float(CONFIG_OPTIONS.get("invalid_command_minimum_similarity", 0.25))
         self.dynamo_db = dynamo_helper.DynamoHelper()
+        self.token = CONFIG_OPTIONS.get('discord_token')
 
         ## Make sure we've got the bare minimums to instantiate and run the bot
-        assert(self.activation_string is not None)
-        assert(self.token_file_path is not None)
+        if (not self.token):
+            raise RuntimeError('Unable to get the token for Discord!')
+        if (not self.activation_string):
+            raise RuntimeError('Unable to run the bot without an activation string!')
 
         ## Init the bot and module manager
         self.bot = commands.Bot(
@@ -164,7 +165,7 @@ class Clipster:
         ## long enough to allow for the bot to be forcefully disconnected
 
         logger.info('Starting up the bot.')
-        self.bot.run(utilities.load_json(os.path.sep.join([utilities.get_root_path(), self.token_file_path]))["token"])
+        self.bot.run(self.token)
 
 
 if (__name__ == "__main__"):

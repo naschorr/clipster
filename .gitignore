@@ -25,6 +25,10 @@ share/
 # Ignore gitattributes
 .gitattributes
 
+# Ignore non-public config environment files
+config.dev.json
+config.prod.json
+
 # Ignore the pip-selfcheck
 pip-selfcheck.json
 
@@ -33,9 +37,6 @@ pip-selfcheck.json
 
 # Ignore venv files
 pyvenv.cfg
-
-# Ignore the token
-token.json
 
 # Ignore supplemental clips, but keep some sensible defaults
 clips/*
