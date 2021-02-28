@@ -27,7 +27,7 @@ These commands allow for the basic operation of the bot, by anyone. Just type th
 - `pip install -r requirements.txt`
     + If you run into issues during PyNaCl's installation, you may need to run: `apt install build-essential libffi-dev python3.6-dev` to install some supplemental features for the setup process.
 - Make sure the [FFmpeg executable](https://www.ffmpeg.org/download.html) is in your system's `PATH` variable
-- Create a [Discord app](https://discordapp.com/developers/applications/me), flag it as a bot, and put the bot token inside `clipster/token.json`
+- Create a [Discord app](https://discordapp.com/developers/applications/me), flag it as a bot, and put the bot token inside `config.json`, next to the `discord_token` key.
 - Register the Bot with your server. Go to: `https://discordapp.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot&permissions=104233024`, but make sure to replace CLIENT_ID with your bot's client id.
 - Select your server, and hit "Authorize"
 - Check out `config.json` for any configuration you might want to do. It's set up to work well out of the box, but you may want to add admins, change pathing, or modify the number of votes required for a skip.
@@ -65,6 +65,7 @@ Admin commands allow for some users to have a little more control over the bot. 
 - **admins** - Array - Array of Discord usernames who have access to `\admin` commands. Uses `Username#1234` format.
 - **activation_string** - String - The string that'll activate the Discord bot from chat messages.
 - **description** - String - The bot's description. This is seen in the help interface.
+- **discord_token** - String - The bot's token used for logging into Discord.
 - **channel_timeout_seconds** - Int - The time in seconds before the bot will leave its current voice channel due to inactivity.
 - **channel_timeout_clip_paths** - Array - Array of paths to clips that the bot can speak right before it leaves the channel after it times out from inactivity. One clip is chosen randomly from the array.
 - **skip_percentage** - Float - The minimum percentage of other users who need to request a skip before the currently playing audio will be skipped. Must be a floating point number between 0.0 and 1.0 inclusive.
@@ -74,7 +75,6 @@ Admin commands allow for some users to have a little more control over the bot. 
 - **log_path** - String - The path where logs should be stored. If left empty, it will default to a `logs` folder inside the Hawking root.
 - **log_max_bytes** - Int - The maximum size (in bytes) of a single log, before it should be rotated out. Defaults to 10MB.
 - **log_backup_count** - Int - The maximum number of logs to keep before deleting the oldest ones.
-- **token_file_path** - String - Force the bot to use a specific token, rather than the normal `token.json` file.
 - **clips_folder_path** - String - Force the bot to use a specific clips folder, rather than the normal `clips/` folder.
 - **ffmpeg_parameters** - String - Options to send to the FFmpeg executable before the `-i` flag.
 - **ffmpeg_post_parameters** - String - Options to send to the FFmpeg executable after the `-i` flag.
