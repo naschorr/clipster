@@ -91,6 +91,4 @@ Admin commands allow for some users to have a little more control over the bot. 
 - **boto_primary_key** - String - The primary key of your chosen table.
 
 ## Lastly...
-You should also take a look at my dedicated [clipster-clips repository](https://github.com/naschorr/clipster-clips). It's got a bunch of phrase files that can easily be put into your clips folder for even more customization.
-
 Tested on Windows 10, and Ubuntu 16.04.
