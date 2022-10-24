@@ -1,177 +1,151 @@
+## Fix inconsistent pathing between my Windows dev environment, and the Ubuntu production server. This needs to happen
+## before the imports so they know where to search.
+import sys
+from common import utilities
+_root_path = str(utilities.get_root_path())
+if (_root_path not in sys.path):
+    sys.path.append(_root_path)
+
+## Importing as usual now
 import os
-import inspect
 import logging
+import asyncio
 
 import discord
 from discord.ext import commands
-from discord.ext.commands.view import StringView
 
-import utilities
-import audio_player
-import admin
-import clips
-import dynamo_helper
-import help_command
-import module_manager
-from string_similarity import StringSimilarity
+from core.cogs import admin_cog, help_cog
+from common import audio_player, message_parser
+from common.cogs import privacy_management_cog, invite_cog
+from common.configuration import Configuration
+from common.logging import Logging
+from common.command_management import invoked_command_handler, command_reconstructor
+from common.database import database_manager
+from common.database.factories import anonymous_item_factory
+from common.database.clients.dynamo_db import dynamo_db_client
+from common.module.module_manager import ModuleManager
+from common.ui import component_factory
+from modules.clips import clips
 
-## Config
-CONFIG_OPTIONS = utilities.load_config()
-
-## Logging
-logger = utilities.initialize_logging(logging.getLogger(__name__))
+## Config & logging
+CONFIG_OPTIONS = Configuration.load_config()
+LOGGER = Logging.initialize_logging(logging.getLogger(__name__))
 
 
 class Clipster:
-    ## Keys
-    VERSION_KEY = "version"
-    ACTIVATION_STRING_KEY = "activation_string"
-    DESCRIPTION_KEY = "description"
-    CLIPS_FOLDER_PATH_KEY = "clips_folder_path"
-
-
     ## Initialize the bot, and add base cogs
-    def __init__(self):
-        self.version = CONFIG_OPTIONS.get(self.VERSION_KEY, 'No version information found')
-        self.activation_string = CONFIG_OPTIONS.get(self.ACTIVATION_STRING_KEY)
-        self.description = CONFIG_OPTIONS.get(self.DESCRIPTION_KEY, 'No bot description found')
-        self.clips_folder_path = CONFIG_OPTIONS.get(self.CLIPS_FOLDER_PATH_KEY)
-        self.invalid_command_minimum_similarity = float(CONFIG_OPTIONS.get("invalid_command_minimum_similarity", 0.25))
-        self.dynamo_db = dynamo_helper.DynamoHelper()
-        self.token = CONFIG_OPTIONS.get('discord_token')
-
-        ## Make sure we've got the bare minimums to instantiate and run the bot
+    def __init__(self, **kwargs):
+        ## Make sure there's a Discord token before doing anything else
+        self.token = CONFIG_OPTIONS.get("discord_token")
         if (not self.token):
-            raise RuntimeError('Unable to get the token for Discord!')
-        if (not self.activation_string):
-            raise RuntimeError('Unable to run the bot without an activation string!')
+            raise RuntimeError("Unable to get Discord token!")
+
+        self.name = CONFIG_OPTIONS.get("name", "the bot").capitalize()
+        self.version = CONFIG_OPTIONS.get("version")
+        self.description = CONFIG_OPTIONS.get("description")
 
         ## Init the bot and module manager
         self.bot = commands.Bot(
-            command_prefix=commands.when_mentioned_or(self.activation_string),
-            description=self.description
+            intents=discord.Intents.default(),
+            command_prefix=commands.when_mentioned,
+            description='\n'.join(self.description)
         )
-        self.module_manager = module_manager.ModuleManager(self, self.bot)
 
-        ## Apply customized HelpCommand
-        self.bot.help_command = help_command.ClipsterHelpCommand()
+        ## Prepare to register modules
+        self._module_manager = ModuleManager(self, self.bot)
 
-        ## Register the modules (Order of registration is important, make sure dependancies are loaded first)
-        self.module_manager.register(admin.Admin, True, self, self.bot)
-        self.module_manager.register(clips.Clips, True, self, self.bot, self.clips_folder_path)
-        self.module_manager.register(audio_player.AudioPlayer, True, self.bot, self.get_clips_cog().play_random_channel_timeout_clip)
+        ## Register the modules (no circular dependencies!)
+        self.module_manager.register_module(message_parser.MessageParser)
+        self.module_manager.register_module(
+            command_reconstructor.CommandReconstructor,
+            dependencies=[message_parser.MessageParser]
+        )
+        self.module_manager.register_module(
+            anonymous_item_factory.AnonymousItemFactory,
+            dependencies=[command_reconstructor.CommandReconstructor]
+        )
+        self.module_manager.register_module(
+            database_manager.DatabaseManager,
+            dynamo_db_client.DynamoDbClient(),
+            dependencies=[command_reconstructor.CommandReconstructor, anonymous_item_factory.AnonymousItemFactory]
+        )
+        self.module_manager.register_module(
+            component_factory.ComponentFactory,
+            self.bot,
+            dependencies=[database_manager.DatabaseManager]
+        )
+        self.module_manager.register_module(
+            admin_cog.AdminCog,
+            self,
+            self.bot,
+            dependencies=[database_manager.DatabaseManager]
+        )
+        self.module_manager.register_module(
+            privacy_management_cog.PrivacyManagementCog,
+            self.bot,
+            dependencies=[component_factory.ComponentFactory, database_manager.DatabaseManager]
+        )
+        self.module_manager.register_module(
+            invite_cog.InviteCog,
+            self.bot,
+            dependencies=[component_factory.ComponentFactory, database_manager.DatabaseManager]
+        )
+        self.module_manager.register_module(
+            invoked_command_handler.InvokedCommandHandler,
+            dependencies=[message_parser.MessageParser, database_manager.DatabaseManager, command_reconstructor.CommandReconstructor]
+        )
+        self.module_manager.register_module(
+            audio_player.AudioPlayer,
+            self.bot,
+            dependencies=[admin_cog.AdminCog, database_manager.DatabaseManager]
+        )
+        self.module_manager.register_module(
+            help_cog.HelpCog,
+            self.bot,
+            dependencies=[component_factory.ComponentFactory, clips.Clips, database_manager.DatabaseManager]
+        )
 
-        ## Load any dynamic modules inside the /modules folder
-        self.module_manager.discover()
+        ## Find any dynamic modules, and prep them for loading
+        self.module_manager.discover_modules()
+
+        ## Load all of the previously registered modules!
+        asyncio.run(self.module_manager.load_registered_modules())
+
+        ## Disable the default help command
+        self.bot.help_command = None
+
+        ## Get a reference to the database manager for on_command_error storage
+        self.database_manager: database_manager.DatabaseManager = self.module_manager.get_module(database_manager.DatabaseManager.__name__)
 
         ## Give some feedback for when the bot is ready to go, and provide some help text via the 'playing' status
         @self.bot.event
         async def on_ready():
-            ## todo: Activity instead of Game? Potentially remove "Playing" text below bot
-            bot_status = discord.Game(type=0, name="Use {}help".format(self.activation_string))
-            await self.bot.change_presence(activity=bot_status)
+            if (loaded_help_cog := self.module_manager.get_module(help_cog.HelpCog.__name__)):
+                status = discord.Activity(name=f"/{loaded_help_cog.help_command.name}", type=discord.ActivityType.watching)
+                await self.bot.change_presence(activity=status)
 
-            logger.info("Logged in as '{}' (version: {}), (id: {})".format(self.bot.user.name, self.version, self.bot.user.id))
+            LOGGER.info("Logged in as '{}' (version: {}), (id: {})".format(self.bot.user.name, self.version, self.bot.user.id))
 
 
         @self.bot.event
         async def on_command_error(ctx, exception):
-            '''Handles command errors. Attempts to find a similar command and suggests it, otherwise directs the user to the help prompt.'''
-            
-            logger.exception("Unable to process command.", exc_info=exception)
-            self.dynamo_db.put(dynamo_helper.DynamoItem(
-                ctx, ctx.message.content, inspect.currentframe().f_code.co_name, False, str(exception)))
+            ## Something weird happened, log it!
+            LOGGER.exception("Unhandled exception in during command execution", exception)
+            await self.database_manager.store(ctx, valid=False)
 
-            ## Attempt to find a command that's similar to the one they wanted. Otherwise just direct them to the help page
-            most_similar_command = self.find_most_similar_command(ctx.message.content)
+    ## Properties
 
-            if (most_similar_command[0] == ctx.invoked_with):
-                ## Handle issues where the command is valid, but couldn't be completed for whatever reason.
-                await ctx.send("I'm sorry <@{}>, I'm afraid I can't do that.\n" \
-                    "Discord is having some issues that won't let me speak right now."
-                    .format(ctx.message.author.id))
-            else:
-                help_text_chunks = [
-                    "Sorry <@{}>, **{}{}** isn't a valid command.".format(ctx.message.author.id, ctx.prefix, ctx.invoked_with)
-                ]
+    @property
+    def module_manager(self) -> ModuleManager:
+        return self._module_manager
 
-                if (most_similar_command[1] > self.invalid_command_minimum_similarity):
-                    help_text_chunks.append("Did you mean **{}{}**?".format(self.activation_string, most_similar_command[0]))
-                else:
-                    help_text_chunks.append("Try the **{}help** page.".format(self.activation_string))
-
-                ## Dump output to user
-                await ctx.send(" ".join(help_text_chunks))
-                return
-
-    ## Methods
-
-    ## Add an arbitary cog to the bot
-    def add_cog(self, cls):
-        self.bot.add_cog(cls)
-
-
-    ## Returns a cog with a given name
-    def get_cog(self, cls_name):
-        return self.bot.get_cog(cls_name)
-
-
-    ## Returns the bot's audio player cog
-    def get_audio_player_cog(self):
-        return self.bot.get_cog("AudioPlayer")
-
-
-    ## Returns the bot's clips cog
-    def get_clips_cog(self):
-        return self.bot.get_cog("Clips")
-
-
-    ## Register an arbitrary module with clipster (easy wrapper for self.module_manager.register)
-    def register_module(self, cls, is_cog, *init_args, **init_kwargs):
-        self.module_manager.register(cls, is_cog, *init_args, **init_kwargs)
-
-
-    ## Finds the most similar command to the supplied one
-    def find_most_similar_command(self, command):
-        ## Build a message string that we can compare with.
-        try:
-            message = command[len(self.activation_string):]
-        except TypeError:
-            message = command
-
-        ## Get a list of all visible commands 
-        commands = [cmd.name for cmd in self.bot.commands if not cmd.hidden]
-
-        ## Find the most similar command
-        most_similar_command = (None, 0)
-        for key in commands:
-            distance = StringSimilarity.similarity(key, message)
-            if (distance > most_similar_command[1]):
-                most_similar_command = (key, distance)
-
-        return most_similar_command
-
-
+    ## Run the bot
     def run(self):
         '''Starts the bot up'''
 
-        ## So ideally there would be some flavor of atexit.register or signal.signal command to gracefully shut the bot
-        ## down upon SIGTERM or SIGINT. However that doesn't seem to be possible at the moment. Discord.py's got most of
-        ## the functionality built into the base close() method that fires on SIGINT and SIGTERM, but the bot never ends
-        ## up getting properly disconnected from the voice channels that it's connected to. I end up having to wait for
-        ## a time out. Otherwise the bot will be in a weird state upon starting back up, and attempting to speak in one
-        ## of the channels that it was previously in. Fortunately this bad state will self-recover in a minute or so,
-        ## but it's still unpleasant. A temporary fix is to bump up the RestartSec= property in the service config to be
-        ## long enough to allow for the bot to be forcefully disconnected
-
-        logger.info('Starting up the bot.')
+        LOGGER.info(f"Starting up {self.name}")
         self.bot.run(self.token)
 
 
-if (__name__ == "__main__"):
-    clipster = Clipster()
-    # clipster.register_module(ArbitraryClass(*init_args, **init_kwargs))
-    # or,
-    # clipster.add_cog(ArbitaryClass(*args, **kwargs))
-
-    clipster.run()
+if(__name__ == "__main__"):
+    Clipster().run()

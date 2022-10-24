@@ -16,20 +16,19 @@ tcl/
 etc/
 share/
 
-# Ignore dev environment project files
-*.vscode
-*.sublime-project
-*.sublime-workspace
-*.code-workspace
-
-# Ignore gitattributes
-.gitattributes
-
 # Ignore non-public config environment files
 config.dev.json
 config.prod.json
 
-# Ignore the pip-selfcheck
+# Ignore dev environment project files
+*.vscode
+*.sublime-project
+*.sublime-workspace
+
+# Ignore gitattributes
+.gitattributes
+
+# Ignore pip files
 pip-selfcheck.json
 
 # Ignore .pyc files
@@ -38,11 +37,20 @@ pip-selfcheck.json
 # Ignore venv files
 pyvenv.cfg
 
-# Ignore supplemental clips, but keep some sensible defaults
-clips/*
-!clips/movies/*
-!clips/internet/*
+# Ignore credentials
+token.json
+modules/*.json
 
-# Ignore logs
+# Ignore supplemental clips, but keep some sensible defaults
+*/clips/clips/*
+!*/clips/clips/internet/*
+
+# Ignore logfiles
+logs/*
 *.log
-*/log/*.log
+
+# Ignore delete_requests & container
+privacy/*
+
+# Ignore linter config
+*.pylintrc
