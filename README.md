@@ -14,14 +14,14 @@ Click [here](https://discord.gg/JJqx8C4) to join!
 - Help me test unstable versions of Clipster and my other bots
 - Let me know if something's broken
 - Post suggestions for improving Clipster and my other bots
-- Got a funny phrase you want added? Suggest it in there!
+- Got a funny clip you want added? Suggest it in there!
 
 ## Commands
 These commands allow for the basic operation of the bot, by anyone. Just type them into a public text channel while connected to a public voice channel! Note that Clipster now uses slash commands, so just typing the command into Discord won't work as expected. You must select the command, and it's extra options (if desired) individually.
-- `/clip <name>` - Speaks the specific preset phrase. Note that the name will autocomplete, so phrases are easy to find.
-- `/find <text>` - The bot will search its loaded phrases for the one whose contents most closely matches the provided text, and will play it.
-- `/skip` - Skip a phrase that you've requested, or start a vote to skip on someone else's phrase.
-- `/random` - Plays a random phrase from the list of preloaded phrases.
+- `/clip <name>` - Plays the specific clip. Note that the name will autocomplete, so clips are easy to find.
+- `/find <text>` - The bot will search its loaded clips for the one whose contents most closely matches the provided text, and will play it.
+- `/skip` - Skip a clip that you've requested, or start a vote to skip on someone else's clip.
+- `/random` - Plays a random clip from the list of clips.
 - `/invite` - Gets you an invite link for the Clipster, as well as gets you an invite link for Clipster's Discord server.
 - `/privacy_policy` - Gives you a link to Clipster's [privacy policy](https://github.com/naschorr/clipster/blob/master/docs/privacy_policy.md).
 - `/help` - Show the help screen.
