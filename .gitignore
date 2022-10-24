@@ -1,0 +1,56 @@
+# Don't share and old versions of files
+*old.*
+
+# Ignore these directories
+bin/
+include/
+lib/
+local/
+tmp/
+temp/
+
+Include/
+Lib/
+Scripts/
+tcl/
+etc/
+share/
+
+# Ignore non-public config environment files
+config.dev.json
+config.prod.json
+
+# Ignore dev environment project files
+*.vscode
+*.sublime-project
+*.sublime-workspace
+
+# Ignore gitattributes
+.gitattributes
+
+# Ignore pip files
+pip-selfcheck.json
+
+# Ignore .pyc files
+*.pyc
+
+# Ignore venv files
+pyvenv.cfg
+
+# Ignore credentials
+token.json
+modules/*.json
+
+# Ignore supplemental clips, but keep some sensible defaults
+*/clips/clips/*
+!*/clips/clips/internet/*
+
+# Ignore logfiles
+logs/*
+*.log
+
+# Ignore delete_requests & container
+privacy/*
+
+# Ignore linter config
+*.pylintrc
