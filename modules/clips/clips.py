@@ -284,7 +284,8 @@ class Clips(DiscoverableCog):
             clips = random.choices(list(self.clips.values()), k=5)
             return [generate_choice(clip) for clip in clips]
         else:
-            return [generate_choice(clip) for clip in self.clips.values() if clip.name.startswith(current)]
+            clips = [generate_choice(clip) for clip in self.clips.values() if current in clip.name or current in clip.help]
+            return clips[:25] ## Max of 25 results can be returned at once
 
 
     async def clip_command(self, interaction: Interaction, name: str, user: discord.Member = None):
