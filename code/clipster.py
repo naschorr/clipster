@@ -130,7 +130,7 @@ class Clipster:
         @self.bot.event
         async def on_command_error(ctx, exception):
             ## Something weird happened, log it!
-            LOGGER.exception("Unhandled exception in during command execution", exception)
+            LOGGER.exception("Unhandled exception in during command execution", exc_info=exception)
             await self.database_manager.store(ctx, valid=False)
 
     ## Properties
