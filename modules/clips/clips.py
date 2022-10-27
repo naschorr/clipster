@@ -8,6 +8,7 @@ from common.command_management.invoked_command_handler import InvokedCommandHand
 from common.command_management.command_reconstructor import CommandReconstructor
 from common.configuration import Configuration
 from common.database.database_manager import DatabaseManager
+from common.exceptions import NoVoiceChannelAvailableException, UnableToConnectToVoiceChannelException
 from common.logging import Logging
 from common.string_similarity import StringSimilarity
 from common.module.discoverable_module import DiscoverableCog
@@ -172,7 +173,7 @@ class Clips(DiscoverableCog):
 
                 await self.audio_player_cog._play_audio_via_server_state(server_state, clip_path, callback)
         except Exception as e:
-            LOGGER.exception("Exception during channel sign-off", e)
+            LOGGER.exception("Exception during channel sign-off", exc_info=e)
             await callback()
 
 
@@ -191,7 +192,7 @@ class Clips(DiscoverableCog):
                 try:
                     self.clips[clip.name] = clip
                 except Exception as e:
-                    LOGGER.warning("Skipping...", e)
+                    LOGGER.warning("Skipping...", exc_info=e)
                 else:
                     counter += 1
 
@@ -223,7 +224,7 @@ class Clips(DiscoverableCog):
             await self.audio_player_cog.play_audio(clip.path, author, target_member or author, interaction)
 
         except NoVoiceChannelAvailableException as e:
-            LOGGER.error("No voice channel available", e)
+            LOGGER.error("No voice channel available", exc_info=e)
             if (e.target_member.id == author.id):
                 return InvokedCommand(False, e, f"Sorry <@{author.id}>, you're not in a voice channel.")
             else:
@@ -241,7 +242,7 @@ class Clips(DiscoverableCog):
             return InvokedCommand(False, e, f"Sorry <@{author.id}>, I'm not able to {' or '.join(error_values)} that channel. Check the permissions and try again later.")
 
         except FileNotFoundError as e:
-            LOGGER.error("FileNotFound when invoking `play_audio`", e)
+            LOGGER.error("FileNotFound when invoking `play_audio`", exc_info=e)
             return InvokedCommand(False, e, f"Sorry <@{author.id}>, I can't say that right now.")
 
         return InvokedCommand(True)
