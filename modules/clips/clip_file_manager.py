@@ -69,11 +69,11 @@ class ClipFileManager:
 
                 clip = Clip(name, path, **kwargs)
                 clips.append(clip)
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 LOGGER.warn(f"Unable to find clip associate with '{name}'. Skipping...")
                 continue
             except Exception as e:
-                LOGGER.warn(f"Error loading clip '{clip_raw['name']}'. Skipping...", e)
+                LOGGER.warn(f"Error loading clip '{name}'. Skipping...", exc_info=e)
                 continue
 
         return sorted(clips, key=lambda clip: clip.name)
@@ -122,7 +122,7 @@ class ClipFileManager:
 
                 return clip_group
             except Exception as e:
-                LOGGER.warning(f"Error loading clip group '{clip_group_name}' from '{path}''. Skipping...", e)
+                LOGGER.warning(f"Error loading clip group '{clip_group_name}' from '{path}''. Skipping...", exc_info=e)
                 return None
 
 
