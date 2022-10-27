@@ -8,6 +8,7 @@ from common.command_management.invoked_command_handler import InvokedCommandHand
 from common.command_management.command_reconstructor import CommandReconstructor
 from common.configuration import Configuration
 from common.database.database_manager import DatabaseManager
+from common.exceptions import NoVoiceChannelAvailableException, UnableToConnectToVoiceChannelException
 from common.logging import Logging
 from common.string_similarity import StringSimilarity
 from common.module.discoverable_module import DiscoverableCog
