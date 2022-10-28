@@ -1,6 +1,6 @@
 {
     "name"                                  : "clipster",
-    "version"                               : "2.3.0-1",
+    "version"                               : "2.3.0-2",
     "description"                           : "A soundboard bot for Discord.",
     "channel_timeout_seconds"               : 300,
     "channel_timeout_clip_paths"            : ["movies/ill-be-back.mp3"],
